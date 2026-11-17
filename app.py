@@ -284,7 +284,8 @@ with t3:
             a.metric("Puntaje de confianza", f"{det['puntaje']} / 100")
             comps = pd.DataFrame(det["componentes"])
             # --- 05.6 Grafico: desglose del puntaje (barra de puntos sobre su maximo)
-            base = alt.Chart(comps).encode(y=alt.Y("nombre:N", sort=None, title=None))
+            base = alt.Chart(comps).encode(y=alt.Y("nombre:N", sort=None, title=None,
+                                                   axis=alt.Axis(labelLimit=260)))
             pista = base.mark_bar(color="#e1e0d9", cornerRadiusEnd=4, height=14).encode(
                 x=alt.X("maximo:Q", title="Puntos", scale=alt.Scale(domain=[0, 30])))
             barra = base.mark_bar(color=AZUL, cornerRadiusEnd=4, height=14).encode(
@@ -323,7 +324,8 @@ with t4:
         a, b, c, d = st.columns(4)
         a.metric("Mediana por puesto 24/7-mes", f"S/ {bm['mediana']:,.0f}")
         a.caption(f"{bm['alcance']} · n = {bm['n']} contratos · {nivel('extraido')}")
-        b.metric("Rango típico (p25 – p75)", f"S/ {bm['p25']:,.0f} – {bm['p75']:,.0f}")
+        b.metric("Rango típico (p25 – p75)", f"{bm['p25'] / 1000:,.1f} – {bm['p75'] / 1000:,.1f} mil",
+                 help=f"S/ {bm['p25']:,.0f} a S/ {bm['p75']:,.0f}: la mitad de los contratos cae en este rango.")
         c.metric("Piso legal de un puesto 24/7", f"S/ {piso24.piso_puesto_mes:,.0f}",
                  help="Solo la planilla: RMV, recargo nocturno, EsSalud, SCTR, Vida Ley, gratificaciones, "
                       "CTS y vacaciones de los agentes necesarios. Sin utilidad ni gastos generales.")
@@ -368,13 +370,16 @@ with t4:
             ).transform_calculate(jitter="random()")
             banda = alt.Chart(pd.DataFrame([bm])).mark_rect(color=AZUL_CLARO, opacity=0.6).encode(
                 x="p25:Q", x2="p75:Q")
-            reglas = pd.DataFrame([{"x": piso24.piso_puesto_mes, "etiqueta": "Piso legal", "color": CRITICO},
+            # Cada etiqueta en su propia fila (y) para que no se pisen cuando la oferta
+            # esta cerca del piso.
+            reglas = pd.DataFrame([{"x": piso24.piso_puesto_mes, "etiqueta": "Piso legal", "color": CRITICO,
+                                    "y": 8},
                                    {"x": oferta * 24 / P.horas_por_dia, "etiqueta": "Oferta evaluada",
-                                    "color": TINTA}])
+                                    "color": TINTA, "y": 24}])
             lineas = alt.Chart(reglas).mark_rule(strokeWidth=2).encode(
                 x="x:Q", color=alt.Color("color:N", scale=None))
-            textos = alt.Chart(reglas).mark_text(align="left", dx=4, dy=-6, fontSize=11).encode(
-                x="x:Q", y=alt.value(8), text="etiqueta:N", color=alt.value("#52514e"))
+            textos = alt.Chart(reglas).mark_text(align="left", dx=4, fontSize=11).encode(
+                x="x:Q", y=alt.Y("y:Q", scale=None, axis=None), text="etiqueta:N", color=alt.value("#52514e"))
             st.altair_chart((banda + puntos + lineas + textos).properties(height=220), width="stretch")
             st.caption("Cada punto es un contrato público de vigilancia. La banda celeste es el rango típico "
                        "(p25–p75). Puestos y horas leídos de las Bases con IA, monto y plazo del contrato firmado.")

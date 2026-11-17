@@ -114,9 +114,12 @@ def mapa_riesgo(departamento: str, provincia: str | None = None,
     sub = gdf[gdf["departamento"] == dep]
     if sub.empty:
         return None
+    # Centro y zoom explicitos: st_folium ignora fit_bounds y mostraba el planisferio.
     b = sub.total_bounds
-    m = folium.Map(tiles="OpenStreetMap", control_scale=True)
-    m.fit_bounds([[b[1], b[0]], [b[3], b[2]]])
+    lado = max(b[2] - b[0], b[3] - b[1])
+    zoom = 8 if lado < 2 else 7 if lado < 4 else 6
+    m = folium.Map(location=[(b[1] + b[3]) / 2, (b[0] + b[2]) / 2], zoom_start=zoom,
+                   tiles="OpenStreetMap", control_scale=True)
     # Escala secuencial de un solo tono (azul claro -> oscuro) para la magnitud; el
     # rojo queda reservado para alertas. 0 casos = gris neutro, no "poco azul".
     rampa = {0: "#f0efec", 1: "#9ec5f4", 2: "#5598e7", 3: "#1c5cab"}

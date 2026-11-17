@@ -139,26 +139,31 @@ def contratos_vigilancia(departamento: str | None = None, solo_validos: bool = T
     return b[m].sort_values("fecha_firma", ascending=False)
 
 
+MIN_CONTRATOS_DEPARTAMENTO = 5
+
+
 def benchmark(departamento: str | None = None) -> dict:
     """
     Rango de precio por puesto 24/7 y mes en un departamento.
 
-    Si el departamento tiene menos de 3 contratos validos se devuelve el nacional y
-    se avisa en `alcance`: un percentil sobre dos contratos no describe un mercado.
+    Si el departamento tiene menos de MIN_CONTRATOS_DEPARTAMENTO contratos validos se
+    devuelve el nacional y se avisa en `alcance`: con tres contratos, uno caro basta para
+    mover la mediana un 60 % (paso con La Libertad), y eso no describe un mercado.
     """
     b = tabla("benchmark_departamento")
     if b.empty:
         return {}
     dep = normalizar(departamento) if departamento else "PERU"
     f = b[b["departamento"] == dep]
-    if f.empty or int(f.iloc[0]["n"]) < 3:
+    if f.empty or int(f.iloc[0]["n"]) < MIN_CONTRATOS_DEPARTAMENTO:
         nac = b[b["departamento"] == "PERU"]
         if nac.empty:
             return {}
         d = nac.iloc[0].to_dict()
         d["alcance"] = "nacional"
-        d["motivo"] = (f"{dep.title()} tiene menos de 3 contratos validos; se usa el rango nacional."
-                       if dep != "PERU" else "")
+        n_dep = int(f.iloc[0]["n"]) if not f.empty else 0
+        d["motivo"] = (f"{dep.title()} tiene {n_dep} contrato(s) valido(s), menos de "
+                       f"{MIN_CONTRATOS_DEPARTAMENTO}: se usa el rango nacional." if dep != "PERU" else "")
         return d
     d = f.iloc[0].to_dict()
     d["alcance"] = "departamental"
