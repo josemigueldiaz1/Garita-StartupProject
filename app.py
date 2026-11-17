@@ -324,9 +324,13 @@ with t4:
         a.metric("Mediana por puesto 24/7-mes", f"S/ {bm['mediana']:,.0f}")
         a.caption(f"{bm['alcance']} · n = {bm['n']} contratos · {nivel('extraido')}")
         b.metric("Rango típico (p25 – p75)", f"S/ {bm['p25']:,.0f} – {bm['p75']:,.0f}")
-        c.metric("Piso legal de un puesto 24/7", f"S/ {piso24.piso_puesto_mes:,.0f}")
-        c.caption(f"{piso24.agentes_necesarios} agentes con RMV S/ {piso24.supuestos['rmv']:,.0f}")
-        d.metric("Contratos públicos bajo el piso", f"{bm.get('pct_bajo_piso', 0):.0f}%")
+        c.metric("Piso legal de un puesto 24/7", f"S/ {piso24.piso_puesto_mes:,.0f}",
+                 help="Solo la planilla: RMV, recargo nocturno, EsSalud, SCTR, Vida Ley, gratificaciones, "
+                      "CTS y vacaciones de los agentes necesarios. Sin utilidad ni gastos generales.")
+        c.caption(f"{piso24.agentes_necesarios} agentes con RMV S/ {piso24.supuestos['rmv']:,.0f} "
+                  f"({cfg.costo_laboral['rmv_norma']})")
+        d.metric("Contratos públicos bajo el piso", f"{bm.get('pct_bajo_piso', 0):.0f}%",
+                 help="Cada contrato se compara con el piso de la RMV vigente cuando se firmó.")
         d.caption("Señal de informalidad, no prueba")
         equiv = P.puestos_equivalentes_24h
         est_bajo, est_med, est_alto = (bm["p25"] * equiv, bm["mediana"] * equiv, bm["p75"] * equiv)
