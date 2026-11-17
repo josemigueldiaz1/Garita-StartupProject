@@ -1,0 +1,68 @@
+{
+  "extraccion_llm": {
+    "fecha_corte": "2026-11-16",
+    "extraidos": 161,
+    "con_puestos": 34,
+    "errores": 0,
+    "costo_usd_lote": 0.15795
+  },
+  "benchmark": {
+    "fecha_corte": "2026-11-16",
+    "contratos_con_extraccion": 161,
+    "validos": 33,
+    "mediana_nacional": 9033.0,
+    "pct_bajo_piso": 45.5,
+    "piso_legal_24h": 8496.29,
+    "excluidos": {
+      "las Bases no dicen cuantos puestos": 127,
+      "extraccion de confianza baja": 1
+    }
+  },
+  "sucamec": {
+    "fecha_corte": "2026-11-16",
+    "url": "https://www.sucamec.gob.pe/rgGSSP/aplicacion/resoluciones/List.xhtml",
+    "filas": 2927,
+    "vigentes": 2927,
+    "empresas_con_autorizacion_vigente": 1020,
+    "empresas_vigilancia": 1004
+  },
+  "oece": {
+    "fecha_corte": "2026-11-16",
+    "meses": "2025-11 a 2026-10",
+    "procesos": 910,
+    "con_contrato": 556,
+    "con_bases": 910,
+    "proveedores_con_ruc": 210
+  },
+  "sunat": {
+    "fecha_corte": "2026-11-16",
+    "rucs_buscados": 1074,
+    "encontrados": 1062,
+    "activos_habidos": 1005
+  },
+  "proveedores_oece": {
+    "fecha_corte": "2026-11-16",
+    "fichas": 1074,
+    "en_registro": 934,
+    "no_aptos": 77,
+    "con_penalidades": 4,
+    "con_sanciones": 0
+  },
+  "defensoria": {
+    "fecha_corte": "2026-11-16",
+    "url": "https://www.defensoria.gob.pe/wp-content/uploads/2026/09/Reporte-de-conflictos-sociales-n-270.pdf",
+    "reporte": "N.° 269",
+    "mes": "Agosto 2026",
+    "conflictos_total": 188,
+    "socioambientales": 92,
+    "socioambientales_mineria": 61,
+    "casos_ubicados": 88,
+    "provincias_con_casos": 62
+  },
+  "estados_emergencia": {
+    "fecha_corte": "2026-11-16",
+    "filas": 49,
+    "vigentes": 31,
+    "fuente": "data/manual/estados_emergencia.csv"
+  }
+}
