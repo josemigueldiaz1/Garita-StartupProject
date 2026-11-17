@@ -144,15 +144,22 @@ def construir(cfg: Config | None = None) -> dict:
     # El plazo sale del contrato firmado (OECE); el que leyo el LLM solo es respaldo.
     b["meses"] = (b["duracion_dias"] / DIAS_POR_MES).round(2)
     b["meses"] = b["meses"].where(b["meses"] >= 1, b["meses_llm"])
-    b["precio_puesto_mes"] = [precio_puesto_mes(m, e, n) for m, e, n in
-                              zip(b["monto_contrato"], b["puestos_equivalentes_24h"], b["meses"])]
+    b["precio_puesto_mes_con_igv"] = [precio_puesto_mes(m, e, n) for m, e, n in
+                                      zip(b["monto_contrato"], b["puestos_equivalentes_24h"], b["meses"])]
+    # El monto del contrato incluye IGV. Se expresa sin IGV para compararlo con el piso de
+    # planilla y con cotizaciones "mas IGV"; en la Amazonia (exonerada) no se descuenta.
+    igv = 1 + float(cfg.costo_laboral.get("igv", 0.18))
+    sin_igv = set(cfg.costo_laboral.get("departamentos_sin_igv", []))
+    factor = b["departamento"].map(lambda d: 1.0 if d in sin_igv else igv)
+    b["precio_puesto_mes"] = (b["precio_puesto_mes_con_igv"] / factor).round(2)
     piso24 = costo_laboral_minimo(24, cfg=cfg).piso_puesto_mes
     motivo = pd.Series("", index=b.index)
     motivo[b["error"].fillna("") != ""] = "error de extraccion"
     motivo[(motivo == "") & ~b["puede_extraer"].fillna(False).astype(bool)] = "las Bases no dicen cuantos puestos"
     motivo[(motivo == "") & (b["confianza"] == "baja")] = "extraccion de confianza baja"
     motivo[(motivo == "") & b["precio_puesto_mes"].isna()] = "faltan puestos o plazo"
-    motivo[(motivo == "") & ((b["precio_puesto_mes"] < PRECIO_MIN) | (b["precio_puesto_mes"] > PRECIO_MAX))] = \
+    con_igv = b["precio_puesto_mes_con_igv"]
+    motivo[(motivo == "") & ((con_igv < PRECIO_MIN) | (con_igv > PRECIO_MAX))] = \
         "precio fuera de rango plausible"
     b["motivo_exclusion"] = motivo
     b["valido"] = motivo == ""

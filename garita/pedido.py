@@ -220,9 +220,9 @@ def solicitud_docx(p: Pedido, empresas: pd.DataFrame, precio: dict, piso: float)
     if precio:
         doc.add_paragraph(
             f"Contratos publicos de vigilancia comparables ({precio.get('alcance', '')}, n = {precio.get('n')}): "
-            f"mediana S/ {precio.get('mediana', 0):,.0f} por puesto 24/7 y mes; rango intercuartil "
+            f"mediana S/ {precio.get('mediana', 0):,.0f} por puesto 24/7 y mes sin IGV; rango intercuartil "
             f"S/ {precio.get('p25', 0):,.0f} a S/ {precio.get('p75', 0):,.0f}. Fuente: OECE, contratos "
-            f"normalizados por Garita.")
+            f"normalizados por Garita. Las propuestas deben cotizar sin IGV y detallarlo aparte.")
     doc.add_paragraph(
         f"Piso legal estimado de un puesto 24/7: S/ {piso:,.0f} al mes (remuneracion minima, recargo "
         f"nocturno, cargas sociales y beneficios). Las ofertas por debajo de ese monto deberan sustentar "
@@ -259,7 +259,7 @@ def solicitud_xlsx(p: Pedido, empresas: pd.DataFrame, precio: dict, piso: float)
         cols = [c for c in ["razon_social", "ruc", "puntaje", "armas", "vence", "provincias_sede",
                             "km_al_sitio"] if c in empresas]
         empresas[cols].to_excel(xw, sheet_name="Empresas invitadas", index=False)
-        pd.DataFrame([{"Concepto": "Mediana por puesto 24/7-mes", "Soles": precio.get("mediana")},
+        pd.DataFrame([{"Concepto": "Mediana por puesto 24/7-mes (sin IGV)", "Soles": precio.get("mediana")},
                       {"Concepto": "Percentil 25", "Soles": precio.get("p25")},
                       {"Concepto": "Percentil 75", "Soles": precio.get("p75")},
                       {"Concepto": "Piso legal puesto 24/7-mes", "Soles": piso}]).to_excel(

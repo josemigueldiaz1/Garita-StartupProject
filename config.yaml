@@ -186,6 +186,12 @@ costo_laboral:
   # El piso es solo la planilla legal, sin gastos generales ni utilidad: una oferta por
   # debajo no alcanza ni para pagar sueldos y beneficios. Es la alerta mas conservadora.
   margen_minimo_empresa_pct: 0.0
+  # Los montos de los contratos publicos incluyen IGV; el piso legal y las cotizaciones
+  # entre empresas ("mas IGV") no. El benchmark se expresa SIN IGV para comparar lo mismo.
+  igv: 0.18
+  # Supuesto simplificado: servicios prestados en la Amazonia exonerados del IGV
+  # (Ley 27037). Sus contratos no se dividen entre 1.18.
+  departamentos_sin_igv: [LORETO, UCAYALI, MADRE DE DIOS]
 
 # -----------------------------------------------------------------------------
 #  Puntaje de confianza (0 a 100). Cada componente declara su peso y su fuente.

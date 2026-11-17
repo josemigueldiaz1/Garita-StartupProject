@@ -443,10 +443,14 @@ with t4:
         if bm.get("motivo"):
             st.caption(bm["motivo"])
         a, b, c, d = st.columns(4)
-        a.metric("Mediana por puesto 24/7-mes", f"S/ {bm['mediana']:,.0f}")
-        a.caption(f"{bm['alcance']} · n = {bm['n']} contratos · {nivel('extraido')}")
+        a.metric("Mediana por puesto 24/7-mes", f"S/ {bm['mediana']:,.0f}",
+                 help="Sin IGV. Los contratos públicos incluyen IGV: su monto se divide entre 1.18 (salvo en "
+                      "Loreto, Ucayali y Madre de Dios, exonerados por la Ley 27037) para compararlo con "
+                      "cotizaciones 'más IGV' y con el piso de planilla.")
+        a.caption(f"sin IGV · {bm['alcance']} · n = {bm['n']} contratos · {nivel('extraido')}")
         b.metric("Rango típico (p25 – p75)", f"{bm['p25'] / 1000:,.1f} – {bm['p75'] / 1000:,.1f} mil",
-                 help=f"S/ {bm['p25']:,.0f} a S/ {bm['p75']:,.0f}: la mitad de los contratos cae en este rango.")
+                 help=f"S/ {bm['p25']:,.0f} a S/ {bm['p75']:,.0f} sin IGV: la mitad de los contratos cae en este rango.")
+        b.caption(f"con IGV: S/ {bm['mediana'] * 1.18:,.0f} de mediana")
         c.metric("Piso legal de un puesto 24/7", f"S/ {piso24.piso_puesto_mes:,.0f}",
                  help="Solo la planilla: RMV, recargo nocturno, EsSalud, SCTR, Vida Ley, gratificaciones, "
                       "CTS y vacaciones de los agentes necesarios. Sin utilidad ni gastos generales.")
@@ -458,12 +462,14 @@ with t4:
         equiv = P.puestos_equivalentes_24h
         est_bajo, est_med, est_alto = (bm["p25"] * equiv, bm["mediana"] * equiv, bm["p75"] * equiv)
         st.info(f"**Estimado para tu pedido** ({equiv:.1f} puestos 24/7 equivalentes): "
-                f"S/ {est_med:,.0f} al mes (rango S/ {est_bajo:,.0f} – {est_alto:,.0f}); "
-                f"S/ {est_med * P.plazo_meses:,.0f} por {P.plazo_meses} meses. "
-                f"El piso legal de tu configuración es S/ {piso.piso_puesto_mes * P.n_puestos:,.0f} al mes.",
+                f"S/ {est_med:,.0f} al mes sin IGV (rango S/ {est_bajo:,.0f} – {est_alto:,.0f}); "
+                f"S/ {est_med * P.plazo_meses:,.0f} por {P.plazo_meses} meses, S/ "
+                f"{est_med * P.plazo_meses * 1.18:,.0f} con IGV. "
+                f"El piso legal de planilla de tu configuración es S/ {piso.piso_puesto_mes * P.n_puestos:,.0f} al mes.",
                 icon="🧮")
-        oferta = st.number_input("Evalúa una oferta: precio por puesto y mes (S/)", 0, 100000,
-                                 int(bm["p25"] * 0.75 if bm.get("p25") else 7000), 100)
+        st.session_state.setdefault("oferta", 7000)
+        oferta = st.number_input("Evalúa una oferta: precio por puesto y mes, sin IGV (S/)", min_value=0,
+                                 max_value=100000, step=100, key="oferta")
         ev = evaluar_oferta(oferta, P.horas_por_dia, bm, cfg)
         mensajes = {"bajo_piso": (st.error, "🚨 Debajo del piso legal: no alcanza para pagar planilla completa. "
                                              "Pide la estructura de costos antes de seguir."),
@@ -479,7 +485,7 @@ with t4:
             cont = cont.assign(armado_txt=cont["armado"].map({"si": "con armas", "no": "sin armas"}).fillna("no indica"))
             puntos = alt.Chart(cont).mark_circle(size=90, color=AZUL, opacity=0.75, stroke="white",
                                                  strokeWidth=1).encode(
-                x=alt.X("precio_puesto_mes:Q", title="Soles por puesto 24/7 y mes"),
+                x=alt.X("precio_puesto_mes:Q", title="Soles por puesto 24/7 y mes, sin IGV"),
                 y=alt.Y("jitter:Q", axis=None, title=None),
                 tooltip=[alt.Tooltip("entidad:N", title="Entidad"),
                          alt.Tooltip("departamento:N", title="Departamento"),

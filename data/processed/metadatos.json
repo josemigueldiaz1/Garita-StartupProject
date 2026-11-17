@@ -10,8 +10,8 @@
     "fecha_corte": "2026-11-17",
     "contratos_con_extraccion": 175,
     "validos": 75,
-    "mediana_nacional": 9074.0,
-    "pct_bajo_piso": 26.7,
+    "mediana_nacional": 8093.0,
+    "pct_bajo_piso": 41.3,
     "piso_legal_24h": 7723.9,
     "excluidos": {
       "las Bases no dicen cuantos puestos": 93,
