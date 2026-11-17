@@ -43,11 +43,32 @@ st.markdown("""<style>
               background: rgba(42,120,214,0.10); margin-right:4px;}
 </style>""", unsafe_allow_html=True)
 
-if "pedido" not in st.session_state:
-    st.session_state.pedido = Pedido()
-if "vencimientos" not in st.session_state:
-    st.session_state.vencimientos = []
-P: Pedido = st.session_state.pedido
+# Cada campo del pedido es un widget con clave fija en st.session_state. Antes los widgets
+# se creaban con value=<valor anterior>: cada clic cambiaba ese valor, Streamlit los
+# trataba como widgets nuevos y "retrocedian" mientras llegaban los clics siguientes.
+CLAVES = {"departamento": "p_dep", "provincia": "p_prov", "tipo_sitio": "p_sitio",
+          "modalidad": "p_modalidad", "con_armas": "p_armas", "tipo_arma": "p_tipo_arma",
+          "n_puestos": "p_npuestos", "horas_por_dia": "p_horas", "dias_por_semana": "p_dias",
+          "plazo_meses": "p_plazo", "supervisor": "p_supervisor", "estatura_min_m": "p_estatura",
+          "edad_max": "p_edad", "experiencia_min_meses": "p_exp", "idiomas": "p_idiomas",
+          "licencia_conducir": "p_licencia", "curso_sucamec": "p_curso", "equipamiento": "p_equip",
+          "notas": "p_notas"}
+OPCIONES = {"p_horas": [24, 12, 8], "p_dias": [7, 6, 5]}
+IDIOMAS = ["Castellano", "Quechua", "Aimara", "Inglés"]
+DEPARTAMENTOS = cfg.sucamec["departamentos"]
+_base = Pedido()
+for _campo, _clave in CLAVES.items():
+    st.session_state.setdefault(_clave, getattr(_base, _campo))
+st.session_state.setdefault("p_texto", EJEMPLO)
+st.session_state.setdefault("region_mapa", _base.departamento)
+st.session_state.setdefault("vencimientos", [])
+P = Pedido(**{campo: st.session_state[clave] for campo, clave in CLAVES.items()})
+
+
+def _validar(clave: str, opciones: list) -> None:
+    """Si el valor guardado ya no esta entre las opciones (cambio el departamento), usa la primera."""
+    if st.session_state.get(clave) not in opciones:
+        st.session_state[clave] = opciones[0]
 
 
 @st.cache_resource
@@ -77,8 +98,73 @@ def _provincias(dep: str) -> list[str]:
     return sorted(c.loc[c["departamento"] == dep, "provincia"].unique()) if not c.empty else []
 
 
+@st.cache_data(show_spinner=False)
+def _ranking() -> pd.DataFrame:
+    return datos.ranking_regiones()
+
+
 def nivel(n: str) -> str:
     return NIVELES.get(n, n)
+
+
+# --- 05.11 Callbacks: corren antes del rerun, por eso pueden escribir en los widgets
+def _interpretar() -> None:
+    """Boton "Interpretar pedido": LLM si hay clave, reglas siempre como respaldo."""
+    texto = st.session_state.p_texto
+    campos, origen = {}, "reglas"
+    ok, _ = llm_disponible()
+    if ok:
+        try:
+            from garita.extraccion import interpretar_pedido
+
+            obj, uso = interpretar_pedido(texto)
+            campos = {k: v for k, v in obj.model_dump().items() if v not in (None, [], "")}
+            origen = f"IA · {uso['tokens_entrada'] + uso['tokens_salida']} tokens · US${uso['costo_usd']:.5f}"
+        except Exception as e:  # noqa: BLE001 - cae a reglas
+            st.session_state.p_aviso = f"La IA no respondió ({str(e)[:80]}). Se usaron reglas."
+    for k, v in interpretar_por_reglas(texto).items():
+        campos.setdefault(k, v)
+    for campo, valor in campos.items():
+        clave = CLAVES.get(campo)
+        if not clave or campo in ("equipamiento", "notas", "modalidad"):
+            continue
+        if campo in ("departamento", "provincia"):
+            valor = datos.normalizar(valor)
+            if campo == "departamento" and valor not in DEPARTAMENTOS:
+                continue
+        elif campo == "tipo_sitio" and valor not in TIPOS_SITIO:
+            continue
+        elif clave in OPCIONES:
+            valor = min(OPCIONES[clave], key=lambda o: abs(o - int(valor)))
+        elif campo == "con_armas":
+            valor = bool(valor)
+        elif campo in ("n_puestos", "plazo_meses"):
+            valor = int(min(max(int(valor), 1), 500 if campo == "n_puestos" else 60))
+        st.session_state[clave] = valor
+    equipo = list(st.session_state.p_equip)
+    for e in campos.get("equipamiento", []) or []:
+        for opcion in EQUIPAMIENTO:
+            palabras = [w for w in datos.normalizar(e).split() if len(w) > 4]
+            if any(w in datos.normalizar(opcion) for w in palabras) and opcion not in equipo:
+                equipo.append(opcion)
+    if "ACCESO" in datos.normalizar(texto) and "Control de accesos" not in equipo:
+        equipo.append("Control de accesos")
+    st.session_state.p_equip = equipo
+    st.session_state.region_mapa = st.session_state.p_dep
+    st.session_state.p_msg = f"Pedido interpretado ({origen}). Revisa y ajusta el detalle abajo."
+
+
+def _sincronizar_region() -> None:
+    st.session_state.region_mapa = st.session_state.p_dep
+
+
+def _usar_region() -> None:
+    """Boton del mapa: lleva la region explorada al pedido."""
+    region = st.session_state.region_mapa
+    st.session_state.p_dep = region
+    provs = _provincias(region)
+    if provs and st.session_state.p_prov not in provs:
+        st.session_state.p_prov = provs[0]
 
 
 meta = datos.metadatos()
@@ -95,7 +181,8 @@ with st.sidebar:
     st.markdown("**Fuentes y fecha de corte**")
     for clave, nombre in [("sucamec", "SUCAMEC"), ("oece", "OECE contratos"),
                           ("proveedores_oece", "OECE proveedores"), ("sunat", "SUNAT padrón"),
-                          ("defensoria", "Defensoría"), ("benchmark", "Benchmark")]:
+                          ("defensoria", "Defensoría"), ("delitos", "Delitos INEI"),
+                          ("benchmark", "Benchmark")]:
         m = meta.get(clave, {})
         extra = f" · {m['reporte']} ({m.get('mes', '')})" if clave == "defensoria" and m.get("reporte") else ""
         st.markdown(f"<span class='garita-nota'>{nombre}: {m.get('fecha_corte', 'pendiente')}{extra}</span>",
@@ -111,140 +198,168 @@ st.markdown("Verificamos a las empresas contra **SUCAMEC, OECE y SUNAT**, compar
             "autorización vigente, o una oferta que no alcanza para pagar planilla, es un riesgo para "
             "tu operación y para tu gente.")
 
-t1, t2, t3, t4, t5, t6 = st.tabs(["1 · Pedido", "2 · Riesgo de la zona", "3 · Proveedores",
+t1, t2, t3, t4, t5, t6 = st.tabs(["1 · Pedido", "2 · Mapa de riesgo", "3 · Proveedores",
                                   "4 · Precio", "5 · Documentos", "6 · Solicitud de propuesta"])
 
 # --- 05.3 Pestana 1: el pedido, en texto libre (LLM o reglas) y en detalle
 with t1:
     st.subheader("¿Qué necesitas proteger?")
-    texto = st.text_area("Descríbelo como se lo dirías a un proveedor", value=EJEMPLO, height=80)
+    st.text_area("Descríbelo como se lo dirías a un proveedor", key="p_texto", height=80)
     c1, c2 = st.columns([1, 3])
-    if c1.button("Interpretar pedido", type="primary"):
-        campos, origen = {}, "reglas"
-        if ok_llm:
-            try:
-                from garita.extraccion import interpretar_pedido
+    c1.button("Interpretar pedido", type="primary", on_click=_interpretar)
+    if st.session_state.get("p_aviso"):
+        c2.warning(st.session_state.pop("p_aviso"))
+    if st.session_state.get("p_msg"):
+        c2.success(st.session_state.pop("p_msg"))
 
-                with st.spinner("Leyendo tu pedido con IA..."):
-                    obj, uso = interpretar_pedido(texto)
-                campos = {k: v for k, v in obj.model_dump().items() if v not in (None, [], "")}
-                if "con_armas" in campos:
-                    campos["con_armas"] = bool(campos["con_armas"])
-                if "n_puestos" not in campos:
-                    campos.update({k: v for k, v in interpretar_por_reglas(texto).items() if k == "n_puestos"})
-                origen = f"IA · {uso['tokens_entrada'] + uso['tokens_salida']} tokens · US${uso['costo_usd']:.5f}"
-            except Exception as e:  # noqa: BLE001 - cae a reglas
-                st.warning(f"La IA no respondió ({str(e)[:80]}). Se usan reglas.")
-        if not campos:
-            campos = interpretar_por_reglas(texto)
-        for k, v in campos.items():
-            if hasattr(P, k) and k not in ("equipamiento", "notas"):
-                setattr(P, k, datos.normalizar(v) if k in ("departamento", "provincia") else v)
-        for e in campos.get("equipamiento", []) or []:
-            for opcion in EQUIPAMIENTO:
-                if any(w in datos.normalizar(opcion) for w in datos.normalizar(e).split() if len(w) > 4):
-                    if opcion not in P.equipamiento:
-                        P.equipamiento.append(opcion)
-        if "ACCESO" in datos.normalizar(texto) and "Control de accesos" not in P.equipamiento:
-            P.equipamiento.append("Control de accesos")
-        c2.success(f"Pedido interpretado ({origen}). Revisa y ajusta el detalle abajo.")
-
-    deps = cfg.sucamec["departamentos"]
     with st.expander("📍 Lugar", expanded=True):
         a, b, c = st.columns(3)
-        P.departamento = a.selectbox("Departamento", deps, index=deps.index(P.departamento)
-                                     if P.departamento in deps else 0)
-        provs = _provincias(P.departamento) or [P.provincia]
-        P.provincia = b.selectbox("Provincia", provs, index=provs.index(P.provincia)
-                                  if P.provincia in provs else 0)
-        P.tipo_sitio = c.selectbox("Tipo de sitio", TIPOS_SITIO, index=TIPOS_SITIO.index(P.tipo_sitio)
-                                   if P.tipo_sitio in TIPOS_SITIO else 0)
+        _validar("p_dep", DEPARTAMENTOS)
+        a.selectbox("Departamento", DEPARTAMENTOS, key="p_dep", on_change=_sincronizar_region)
+        provs = _provincias(st.session_state.p_dep) or [st.session_state.p_prov]
+        _validar("p_prov", provs)
+        b.selectbox("Provincia", provs, key="p_prov")
+        _validar("p_sitio", TIPOS_SITIO)
+        c.selectbox("Tipo de sitio", TIPOS_SITIO, key="p_sitio")
     with st.expander("👮 Personal y horario", expanded=True):
         a, b, c, d = st.columns(4)
-        P.n_puestos = a.number_input("Puestos", 1, 500, int(P.n_puestos))
-        P.horas_por_dia = b.selectbox("Horas por día", [24, 12, 8], index=[24, 12, 8].index(P.horas_por_dia)
-                                      if P.horas_por_dia in (24, 12, 8) else 0)
-        P.dias_por_semana = c.selectbox("Días por semana", [7, 6, 5], index=[7, 6, 5].index(P.dias_por_semana)
-                                        if P.dias_por_semana in (7, 6, 5) else 0)
-        P.plazo_meses = d.number_input("Plazo (meses)", 1, 60, int(P.plazo_meses))
+        a.number_input("Puestos", min_value=1, max_value=500, step=1, key="p_npuestos")
+        _validar("p_horas", OPCIONES["p_horas"])
+        b.selectbox("Horas por día", OPCIONES["p_horas"], key="p_horas")
+        _validar("p_dias", OPCIONES["p_dias"])
+        c.selectbox("Días por semana", OPCIONES["p_dias"], key="p_dias")
+        d.number_input("Plazo (meses)", min_value=1, max_value=60, step=1, key="p_plazo")
         st.markdown("**Perfil exigido** <span class='garita-nota'>(requisito tuyo que la empresa declara "
                     "cumplir; Garita no guarda datos de vigilantes)</span>", unsafe_allow_html=True)
         a, b, c, d = st.columns(4)
-        P.estatura_min_m = a.number_input("Estatura mínima (m)", 1.50, 1.90, float(P.estatura_min_m), 0.01)
-        P.edad_max = b.number_input("Edad máxima", 25, 70, int(P.edad_max))
-        P.experiencia_min_meses = c.number_input("Experiencia mínima (meses)", 0, 240, int(P.experiencia_min_meses))
-        P.idiomas = d.multiselect("Idiomas", ["Castellano", "Quechua", "Aimara", "Inglés"], P.idiomas)
+        a.number_input("Estatura mínima (m)", min_value=1.50, max_value=1.90, step=0.01, format="%.2f",
+                       key="p_estatura")
+        b.number_input("Edad máxima", min_value=25, max_value=70, step=1, key="p_edad")
+        c.number_input("Experiencia mínima (meses)", min_value=0, max_value=240, step=6, key="p_exp")
+        st.session_state.p_idiomas = [i for i in st.session_state.p_idiomas if i in IDIOMAS]
+        d.multiselect("Idiomas", IDIOMAS, key="p_idiomas")
         a, b, c = st.columns(3)
-        P.supervisor = a.toggle("Supervisor de turno", P.supervisor)
-        P.licencia_conducir = b.toggle("Licencia de conducir", P.licencia_conducir)
-        P.curso_sucamec = c.toggle("Curso SUCAMEC vigente", P.curso_sucamec)
+        a.toggle("Supervisor de turno", key="p_supervisor")
+        b.toggle("Licencia de conducir", key="p_licencia")
+        c.toggle("Curso SUCAMEC vigente", key="p_curso")
     with st.expander("🔫 Armamento y 📡 equipamiento", expanded=True):
         a, b = st.columns(2)
-        P.con_armas = a.toggle("Con armas de fuego", P.con_armas)
-        if P.con_armas:
-            P.tipo_arma = b.selectbox("Tipo de arma", ARMAS, index=ARMAS.index(P.tipo_arma)
-                                      if P.tipo_arma in ARMAS else 0)
+        a.toggle("Con armas de fuego", key="p_armas")
+        if st.session_state.p_armas:
+            _validar("p_tipo_arma", ARMAS)
+            b.selectbox("Tipo de arma", ARMAS, key="p_tipo_arma")
             b.caption("SUCAMEC verifica que la empresa esté autorizada **con armas**; el tipo de arma lo "
                       "declara la empresa.")
-        P.equipamiento = st.multiselect("Equipamiento", list(EQUIPAMIENTO), P.equipamiento)
-        verificables = [e for e in P.equipamiento if EQUIPAMIENTO[e]]
+        st.session_state.p_equip = [e for e in st.session_state.p_equip if e in EQUIPAMIENTO]
+        st.multiselect("Equipamiento", list(EQUIPAMIENTO), key="p_equip")
+        verificables = [e for e in st.session_state.p_equip if EQUIPAMIENTO[e]]
         if verificables:
             st.caption("✅ Se verifica contra SUCAMEC: " + ", ".join(verificables) +
                        ". El resto lo declara la empresa.")
-        P.notas = st.text_input("Notas para los proveedores", P.notas)
+        st.text_input("Notas para los proveedores", key="p_notas")
+    P = Pedido(**{campo: st.session_state[clave] for campo, clave in CLAVES.items()})
     st.info(f"**Tu pedido:** {P.n_puestos} puestos de {P.horas_por_dia} h, {P.dias_por_semana} días, "
             f"{'con' if P.con_armas else 'sin'} armas, {P.tipo_sitio} en {P.provincia.title()} "
             f"({P.departamento.title()}), {P.plazo_meses} meses. Equivale a "
             f"{P.puestos_equivalentes_24h:.1f} puestos 24/7.", icon="🧾")
 
-# --- 05.4 Pestana 2: riesgo de la zona (Defensoria + estados de emergencia + mapa)
+# --- 05.4 Pestana 2: mapa de riesgo y oferta por region (cualquier region del Peru)
+ICONO_MOTIVO = [("MINERIA", "⛏️ Minería ilegal"), ("NARCO", "🌿 Narcotráfico"), ("CRIMIN", "🎯 Crimen organizado"),
+                ("VIOLENCIA", "🎯 Violencia y criminalidad"), ("EXTORSION", "🎯 Extorsión")]
+
+
+def _etiqueta_motivo(motivo: str) -> str:
+    m = datos.normalizar(motivo)
+    return next((etq for clave, etq in ICONO_MOTIVO if clave in m), "🚨 Otro motivo")
+
+
 with t2:
-    r = datos.riesgo_zona(P.departamento, P.provincia)
-    st.subheader(f"Riesgo en {P.provincia.title()}, {P.departamento.title()}")
-    a, b, c = st.columns(3)
-    a.metric("Conflictos sociales en el departamento", r.get("conflictos_departamento", "—"),
-             help="Cuadro 3 del reporte mensual de la Defensoría del Pueblo.")
-    a.caption(f"Puesto {r.get('ranking_departamento', '—')} de 25 · {r.get('activos_departamento', 0)} activos · "
-              f"{nivel('verificado')}")
-    b.metric("Casos ubicados en la provincia", r.get("casos_provincia", 0),
-             help="Casos que el reporte ubica en la provincia (alertas, mediación, acuerdos). Es un mínimo.")
-    b.caption(f"{r.get('reporte', '')} · {r.get('mes', '')}")
-    em = r.get("estados_emergencia", [])
-    c.metric("Estados de emergencia vigentes", len(em))
-    c.caption("Decretos supremos vigentes en la zona · " + nivel("verificado"))
-    alto = bool(em) or r.get("conflictos_departamento", 0) >= 10 or r.get("casos_provincia", 0) >= 2
-    medio = r.get("conflictos_departamento", 0) >= 4 or r.get("casos_provincia", 0) >= 1
+    from garita.geo import CAPAS, mapa_region
+    from streamlit_folium import st_folium
+
+    st.subheader("🗺️ Mapa de riesgo y proveedores por región")
+    a, b = st.columns([1, 2])
+    _validar("region_mapa", DEPARTAMENTOS)
+    region = a.selectbox("Región a explorar", DEPARTAMENTOS, key="region_mapa", format_func=str.title)
+    capa = b.radio("Colorear el mapa por", list(CAPAS), horizontal=True, key="capa_mapa")
+    if region != P.departamento:
+        a.button(f"Usar {region.title()} en mi pedido", on_click=_usar_region)
+
+    rk = _ranking().set_index("departamento")
+    f = rk.loc[region]
+    prov_pedido = P.provincia if region == P.departamento else None
+    r = datos.riesgo_zona(region, prov_pedido)
+    em_region = datos.estados_emergencia(region)
+    anio = int(f["anio"]) if pd.notna(f.get("anio")) else 2024
+
+    # --- 05.12 Tarjetas: cuatro senales de la region, cada una con su fuente
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("🔫 Delitos por 10 mil hab.", f"{f['tasa_10mil']:,.0f}",
+              help=f"Denuncias por comisión de delitos registradas por la PNP (SIDPOL), {anio}. Fuente: INEI.")
+    c1.caption(f"{int(f['denuncias']):,} denuncias en {anio} · puesto {int(f['ranking_tasa'])} de 25 · "
+               f"{nivel('verificado')}")
+    c2.metric("⚠️ Conflictos sociales", int(f["conflictos"]),
+              help="Cuadro 3 del reporte mensual de la Defensoría del Pueblo.")
+    c2.caption(f"{int(f.get('activos', 0))} activos · Defensoría {r.get('reporte', '')} · {nivel('verificado')}")
+    c3.metric("🚨 Estados de emergencia", len(em_region))
+    c3.caption("Decretos supremos vigentes en la región · " + nivel("verificado"))
+    c4.metric("🛡️ Empresas autorizadas", int(f["empresas_vigilancia"]),
+              help="Empresas con autorización vigente de SUCAMEC para vigilancia privada con sede en la región.")
+    c4.caption(f"{int(f['empresas_con_armas'])} con armas · SUCAMEC · {nivel('verificado')}")
+
+    tasa_p75 = rk["tasa_10mil"].quantile(0.75)
+    alto = len(em_region) > 0 or f["tasa_10mil"] >= tasa_p75 or f["conflictos"] >= 10
+    medio = f["tasa_10mil"] >= rk["tasa_10mil"].median() or f["conflictos"] >= 4
+    lugar = f"{prov_pedido.title()}, {region.title()}" if prov_pedido else region.title()
     if alto:
-        st.error("**Riesgo alto.** Prioriza empresas con vigilancia **con armas**, sede cercana, supervisión "
+        st.error(f"**Riesgo alto en {lugar}.** Prioriza vigilancia **con armas**, sede cercana, supervisión "
                  "24 h y un plan de contingencia y de relacionamiento con la comunidad. En zonas así, el "
                  "precio más bajo suele ser el más caro.", icon="🚨")
     elif medio:
-        st.warning("**Riesgo medio.** Exige supervisión, protocolo de relevo y tiempos de respuesta por "
-                   "escrito.", icon="⚠️")
+        st.warning(f"**Riesgo medio en {lugar}.** Exige supervisión, protocolo de relevo y tiempos de "
+                   "respuesta por escrito.", icon="⚠️")
     else:
-        st.success("**Riesgo bajo según las fuentes oficiales.** Igual verifica autorización y planilla.",
-                   icon="✅")
-    for e in em:
-        st.markdown(f"- **{e.get('provincia') or e.get('departamento')}**: {e.get('motivo', '')} · "
-                    f"{e.get('norma', '')} · hasta {e.get('fecha_fin', '')} · [fuente]({e.get('url', '')})")
+        st.success(f"**Riesgo bajo en {lugar} según las fuentes oficiales.** Igual verifica autorización "
+                   "y planilla.", icon="✅")
+    for e in em_region.itertuples():
+        st.markdown(f"- {_etiqueta_motivo(e.motivo)} · **{(e.provincia or e.departamento).title()}**"
+                    f"{' (' + e.distrito.replace('|', ', ').title() + ')' if e.distrito else ''} · {e.norma} · "
+                    f"{'hasta ' + pd.Timestamp(e.fecha_fin).strftime('%d/%m/%Y') if pd.notna(e.fecha_fin) else 'vigencia por confirmar'}"
+                    f" · [decreto]({e.url})")
 
     # ===== HERRAMIENTA 06 · GeoPandas y Folium =====
-    # --- 06.4 Mapa en la app: provincias por casos, sitio del cliente y sedes de la lista corta
-    from garita.geo import mapa_riesgo
-    from streamlit_folium import st_folium
+    # --- 06.4 Mapa en la app: Peru por region, la region elegida, emergencias, conflictos y empresas
+    m, nombre_capa = mapa_region(region, prov_pedido, capa, datos.empresas_por_provincia(region))
+    st_folium(m, height=540, use_container_width=True, returned_objects=[], key="mapa_region")
+    st.caption(f"**Color de cada región:** {nombre_capa}; más oscuro = más alto. "
+               "🟠 burbuja: empresas con sede autorizada en la provincia (más grande = más empresas) · "
+               "🔴 estado de emergencia (◆ minería ilegal, ⊕ crimen organizado, 🍃 narcotráfico) · "
+               "🔥 casos del reporte de la Defensoría · ★ tu sitio. Pasa el cursor por el mapa para ver los números.")
 
-    lista = _lista(P.departamento, P.provincia, P.modalidad, P.armas)
-    sedes = lista.head(15).rename(columns={"provincias_sede": "provincia"}) if not lista.empty else None
-    m = mapa_riesgo(P.departamento, P.provincia, sedes)
-    if m is not None:
-        st_folium(m, height=470, use_container_width=True, returned_objects=[])
-        st.caption("Color: casos ubicados por la Defensoría en cada provincia (gris = ninguno). ★ tu sitio · "
-                   "● sedes autorizadas de las 15 mejores empresas. No es un índice de criminalidad.")
-    for caso in r.get("casos", [])[:5]:
-        st.markdown(f"<span class='garita-nota'>• {caso['caso']} ({caso.get('tipo') or 'tipo no indicado'}, "
-                    f"p. {caso['pagina']})</span>", unsafe_allow_html=True)
-    if r.get("fuente"):
-        st.caption(f"Fuente: [Defensoría del Pueblo, {r.get('reporte')}]({r['fuente']})")
+    st.markdown(f"**Provincias de {region.title()}**")
+    pr = datos.provincias_region(region).sort_values(["empresas", "n_casos"], ascending=False)
+    st.dataframe(pr.rename(columns={"provincia": "Provincia", "empresas": "🛡️ Empresas con sede",
+                                    "con_armas": "🔫 De ellas con armas", "n_casos": "⚠️ Casos Defensoría",
+                                    "emergencia": "🚨 Estado de emergencia"}),
+                 hide_index=True, width="stretch", height=min(38 * (len(pr) + 1), 360))
+
+    # --- 05.13 Grafico: la region elegida frente a las otras 24
+    with st.expander("📊 Comparar con otras regiones"):
+        col, titulo = CAPAS[capa]
+        comp = rk.reset_index()[["departamento", col]].rename(columns={col: "valor"})
+        comp["region"] = comp["departamento"].str.title()
+        barras = alt.Chart(comp).mark_bar(cornerRadiusEnd=4, height=12).encode(
+            x=alt.X("valor:Q", title=titulo),
+            y=alt.Y("region:N", sort="-x", title=None, axis=alt.Axis(labelLimit=160)),
+            color=alt.condition(alt.datum.departamento == region, alt.value(AZUL), alt.value(AZUL_CLARO)),
+            tooltip=[alt.Tooltip("region:N", title="Región"), alt.Tooltip("valor:Q", title=titulo, format=",.1f")])
+        st.altair_chart(barras.properties(height=25 * len(comp)), width="stretch")
+
+    fuentes = [("INEI · denuncias por departamento", datos.metadatos().get("delitos", {}).get("url", "")),
+               (f"Defensoría del Pueblo · reporte {r.get('reporte', '')}", r.get("fuente", "")),
+               ("SUCAMEC · empresas autorizadas", cfg.sucamec["url"])]
+    st.caption("Fuentes: " + " · ".join(f"[{n}]({u})" for n, u in fuentes if u) +
+               " · estados de emergencia: decretos supremos en El Peruano (tabla curada en el repo).")
 
 # --- 05.5 Pestana 3: lista corta con puntaje de confianza y su desglose
 with t3:
