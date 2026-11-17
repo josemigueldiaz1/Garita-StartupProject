@@ -19,7 +19,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 SALIDA = RAIZ / "docs" / "capturas"
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8501"
 
-PESTANAS = [("2 · Riesgo de la zona", "1_riesgo.png"),
+PESTANAS = [("2 · Mapa de riesgo", "1_riesgo.png"),
             ("3 · Proveedores", "2_proveedores.png"),
             ("4 · Precio", "3_precio.png")]
 

@@ -226,5 +226,73 @@ def riesgo_zona(departamento: str, provincia: str | None = None) -> dict:
     return out
 
 
+DEPARTAMENTOS = ["AMAZONAS", "ANCASH", "APURIMAC", "AREQUIPA", "AYACUCHO", "CAJAMARCA", "CALLAO",
+                 "CUSCO", "HUANCAVELICA", "HUANUCO", "ICA", "JUNIN", "LA LIBERTAD", "LAMBAYEQUE",
+                 "LIMA", "LORETO", "MADRE DE DIOS", "MOQUEGUA", "PASCO", "PIURA", "PUNO",
+                 "SAN MARTIN", "TACNA", "TUMBES", "UCAYALI"]
+
+
+def empresas_por_provincia(departamento: str, modalidad: str = "VIGILANCIA PRIVADA") -> pd.DataFrame:
+    """Empresas con sede autorizada (vigente) en cada provincia del departamento."""
+    r = tabla("sucamec_resoluciones")
+    if r.empty:
+        return pd.DataFrame(columns=["provincia", "empresas", "con_armas"])
+    v = r[(r["departamento"] == normalizar(departamento)) & (r["modalidad"] == normalizar(modalidad))
+          & r["vigente"]]
+    g = v.groupby("provincia").agg(empresas=("ruc", "nunique")).reset_index()
+    armas = v[v["armas"] == "CON ARMAS"].groupby("provincia")["ruc"].nunique().rename("con_armas")
+    return g.merge(armas, on="provincia", how="left").fillna({"con_armas": 0}).astype({"con_armas": int})
+
+
+def ranking_regiones() -> pd.DataFrame:
+    """
+    Una fila por departamento con las senales de riesgo y de oferta, cada una de su fuente:
+    delitos (INEI/SIDPOL 2024), conflictos (Defensoria), estados de emergencia (decretos
+    vigentes) y empresas con autorizacion de vigilancia (SUCAMEC).
+    """
+    base = pd.DataFrame({"departamento": DEPARTAMENTOS})
+    d = tabla("delitos_departamento")
+    if not d.empty:
+        base = base.merge(d[["departamento", "denuncias", "tasa_10mil", "ranking_tasa", "anio"]],
+                          on="departamento", how="left")
+    c = tabla("conflictos_departamento")
+    if not c.empty:
+        base = base.merge(c, on="departamento", how="left")
+    em = estados_emergencia()
+    base["emergencias"] = base["departamento"].map(
+        em["departamento"].map(normalizar).value_counts() if not em.empty else {}).fillna(0).astype(int)
+    r = tabla("sucamec_resoluciones")
+    if not r.empty:
+        v = r[(r["modalidad"] == "VIGILANCIA PRIVADA") & r["vigente"]]
+        base["empresas_vigilancia"] = base["departamento"].map(v.groupby("departamento")["ruc"].nunique())
+        base["empresas_con_armas"] = base["departamento"].map(
+            v[v["armas"] == "CON ARMAS"].groupby("departamento")["ruc"].nunique())
+    for col in ("conflictos", "activos", "empresas_vigilancia", "empresas_con_armas", "denuncias"):
+        if col in base:
+            base[col] = base[col].fillna(0).astype(int)
+    return base
+
+
+def provincias_region(departamento: str) -> pd.DataFrame:
+    """Tabla por provincia: empresas con sede, casos de la Defensoria y estado de emergencia."""
+    dep = normalizar(departamento)
+    c = tabla("centroides_distritos")
+    provs = pd.DataFrame({"provincia": sorted(c.loc[c["departamento"] == dep, "provincia"].unique())}) \
+        if not c.empty else pd.DataFrame(columns=["provincia"])
+    out = provs.merge(empresas_por_provincia(dep), on="provincia", how="left")
+    cp = tabla("conflictos_provincia")
+    if not cp.empty:
+        out = out.merge(cp[cp["departamento"] == dep][["provincia", "n_casos"]], on="provincia", how="left")
+    em = estados_emergencia(dep)
+    out["emergencia"] = out["provincia"].map(
+        {normalizar(p): f"{n} · {str(m)[:70]}" for p, n, m in zip(em["provincia"], em["norma"], em["motivo"])}
+        if not em.empty else {}).fillna("")
+    if not em.empty and (em["provincia"] == "").any():
+        fila = em[em["provincia"] == ""].iloc[0]
+        out.loc[out["emergencia"] == "", "emergencia"] = f"{fila['norma']} (todo el departamento)"
+    return out.fillna({"empresas": 0, "con_armas": 0, "n_casos": 0}).astype(
+        {"empresas": int, "con_armas": int, "n_casos": int})
+
+
 def hoy() -> date:
     return date.today()
