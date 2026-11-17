@@ -95,8 +95,10 @@ def interpretar_por_reglas(texto: str) -> dict:
     m = re.search(r"(\d+)\s*MESES", t)
     if m:
         out["plazo_meses"] = int(m.group(1))
-    for sitio in TIPOS_SITIO:
-        if normalizar(sitio) in t or (sitio == "mina" and "MINER" in t):
+    # "campamento minero" es un campamento: los sitios explicitos van antes que "mina",
+    # que tambien se activa con "minero" y por eso queda al final.
+    for sitio in [s for s in TIPOS_SITIO if s != "mina"] + ["mina"]:
+        if re.search(rf"\b{normalizar(sitio)}", t) or (sitio == "mina" and "MINER" in t):
             out["tipo_sitio"] = sitio
             break
     cent = tabla("centroides_distritos")

@@ -38,3 +38,4 @@ default-groups = ["mcp", "dev"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
