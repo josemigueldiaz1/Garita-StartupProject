@@ -166,29 +166,58 @@ def benchmark(departamento: str | None = None) -> dict:
 
 
 # ---------------------------------------------------------------------- riesgo
-def riesgo_zona(departamento: str, provincia: str | None = None) -> dict:
-    """Conflictos sociales registrados por la Defensoria en la provincia y el departamento."""
-    cp = tabla("conflictos_provincia")
-    casos = tabla("conflictos")
-    dep = normalizar(departamento)
-    out: dict = {"departamento": dep, "provincia": normalizar(provincia) if provincia else None,
-                 "reporte": metadatos().get("defensoria", {}).get("reporte")}
-    if cp.empty:
-        return out
-    d = cp[cp["departamento"] == dep]
-    out["casos_departamento"] = int(d["n_casos"].sum())
-    out["socioambientales_departamento"] = int(d["n_socioambientales"].sum())
-    out["ranking_departamento"] = int(
-        cp.groupby("departamento")["n_casos"].sum().rank(ascending=False, method="min").get(dep, 0))
+def estados_emergencia(departamento: str | None = None, provincia: str | None = None) -> pd.DataFrame:
+    """Estados de emergencia vigentes (tabla curada a mano con su decreto, data/manual)."""
+    ruta = load_config().root / "data" / "manual" / "estados_emergencia.csv"
+    if not ruta.exists():
+        return pd.DataFrame()
+    e = pd.read_csv(ruta, dtype=str).fillna("")
+    e["fecha_fin"] = pd.to_datetime(e["fecha_fin"], errors="coerce")
+    e = e[e["fecha_fin"].isna() | (e["fecha_fin"] >= pd.Timestamp(hoy()))]
+    if departamento:
+        e = e[e["departamento"].map(normalizar) == normalizar(departamento)]
     if provincia:
-        p = d[d["provincia"] == normalizar(provincia)]
+        e = e[(e["provincia"].map(normalizar) == normalizar(provincia)) | (e["provincia"] == "")]
+    return e
+
+
+def riesgo_zona(departamento: str, provincia: str | None = None) -> dict:
+    """
+    Tres senales de riesgo de la zona, cada una con su fuente:
+
+    - Conflictos sociales del departamento (Cuadro 3 del reporte de la Defensoria):
+      el conteo oficial, con activos y latentes, y su puesto entre los 25.
+    - Casos que el reporte ubica en la provincia (secciones de alertas, mediacion y
+      acuerdos): el reporte 2026 ya no lista todos los casos, asi que es un minimo.
+    - Estados de emergencia vigentes por decreto supremo (tabla curada).
+    """
+    dep = normalizar(departamento)
+    prov = normalizar(provincia) if provincia else None
+    meta = metadatos().get("defensoria", {})
+    out: dict = {"departamento": dep, "provincia": prov, "reporte": meta.get("reporte"),
+                 "mes": meta.get("mes"), "fuente": meta.get("url")}
+    cd = tabla("conflictos_departamento")
+    if not cd.empty:
+        f = cd[cd["departamento"] == dep]
+        if not f.empty:
+            out.update({"conflictos_departamento": int(f.iloc[0]["conflictos"]),
+                        "activos_departamento": int(f.iloc[0]["activos"]),
+                        "latentes_departamento": int(f.iloc[0]["latentes"])})
+        out["ranking_departamento"] = int(cd.set_index("departamento")["conflictos"]
+                                          .rank(ascending=False, method="min").get(dep, 0))
+    cp = tabla("conflictos_provincia")
+    if prov and not cp.empty:
+        p = cp[(cp["departamento"] == dep) & (cp["provincia"] == prov)]
         out["casos_provincia"] = int(p["n_casos"].sum()) if not p.empty else 0
-        out["socioambientales_provincia"] = int(p["n_socioambientales"].sum()) if not p.empty else 0
+    casos = tabla("conflictos")
     if not casos.empty:
         c = casos[casos["departamento"] == dep]
-        if provincia:
-            c = c[c["provincia"] == normalizar(provincia)]
-        out["casos"] = c[["caso", "tipo", "estado", "provincia", "distrito"]].head(10).to_dict("records")
+        if prov:
+            c = c[c["provincia"] == prov]
+        out["casos"] = c[["caso", "tipo", "provincia", "pagina"]].head(10).to_dict("records")
+    em = estados_emergencia(dep, prov)
+    out["estados_emergencia"] = em.assign(fecha_fin=em["fecha_fin"].dt.strftime("%Y-%m-%d")).to_dict(
+        "records") if not em.empty else []
     return out
 
 
