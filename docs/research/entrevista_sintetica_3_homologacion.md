@@ -29,7 +29,7 @@
 
 | Dolor | Cita (ficticia) | Respaldo público (real) |
 |---|---|---|
-| La homologación es una foto anual | "Homologo hoy, y a los cuatro meses la autorización o la póliza ya venció." | Las homologadoras evalúan una vez al año y no dan referencia de precio ([docs/competencia.md](../competencia.md)); cada autorización de SUCAMEC tiene su fecha de vencimiento, que Garita ya registra para 2,927 resoluciones ([registro](https://www.sucamec.gob.pe/rgGSSP/aplicacion/resoluciones/List.xhtml)) |
+| La homologación es una foto anual | "Homologo hoy, y a los cuatro meses la autorización o la póliza ya venció." | Las homologadoras evalúan una vez al año y no dan referencia de precio ([docs/competencia.md](../competencia.md)); cada autorización de SUCAMEC tiene su fecha de vencimiento, que Garita ya registra para 3,153 resoluciones ([registro](https://www.sucamec.gob.pe/rgGSSP/aplicacion/resoluciones/List.xhtml)) |
 | Verificación manual de fuentes públicas | "Lo público lo reviso igual que cualquiera: entrando a cada portal." | SUCAMEC, SUNAT y el buscador de proveedores del OECE son portales separados, consultados por RUC |
 | Los estados "no apto" confunden | "Un cliente pensó que una empresa estaba sancionada y solo tenía el registro vencido." | 77 de las empresas consultadas figuran como no aptas para contratar con el Estado, casi siempre por el RNP vencido y sin sanciones (dato de Garita sobre la [ficha del OECE](https://apps.osce.gob.pe/perfilprov-ui/)) |
 | El precio queda fuera | "Yo digo si es confiable, no si es caro." | La homologación no cubre precio ([docs/competencia.md](../competencia.md)) |
