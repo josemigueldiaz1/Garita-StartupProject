@@ -324,11 +324,12 @@ def evaluar_oferta(precio_puesto_mes: float, horas_dia: int = 24,
 # --- 04.5 Herramientas de contexto: riesgo de la zona y puntaje de confianza
 @mcp.tool(annotations=SOLO_LECTURA)
 def riesgo_zona(departamento: str, provincia: str | None = None) -> dict:
-    """Conflictos sociales registrados por la Defensoria del Pueblo en el departamento y la provincia.
+    """Riesgo de la zona: conflictos sociales (Defensoria) y estados de emergencia vigentes.
 
-    Incluye cuantos son socioambientales (ligados a mineria e hidrocarburos), el puesto del
-    departamento en el ranking nacional y hasta 10 casos con su ubicacion. Es contexto para
-    dimensionar el servicio, no una prediccion de incidentes.
+    Devuelve el conteo oficial del departamento (Cuadro 3 del reporte: total, activos,
+    latentes y su puesto entre los 25), los casos que el reporte ubica en la provincia (un
+    minimo: el reporte 2026 no lista todos) y los estados de emergencia vigentes con su
+    decreto supremo. Es contexto para dimensionar el servicio, no una prediccion de incidentes.
     """
     _sin_datos("conflictos_provincia", "defensoria")
     dep = _departamento(departamento)

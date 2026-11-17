@@ -43,7 +43,7 @@ Si el pedido de `$ARGUMENTS` ya trae estos datos, no vuelvas a preguntarlos.
 ## 4. Confianza y contexto
 
 1. `puntaje_confianza(ruc, departamento, modalidad, armas)` para cada empresa que pasó el paso 2. Muestra **el desglose por componente**, no solo el número.
-2. `riesgo_zona(departamento, provincia)` para dimensionar el servicio: cuántos conflictos hay en la provincia y cuántos son socioambientales.
+2. `riesgo_zona(departamento, provincia)` para dimensionar el servicio: conflictos del departamento (conteo oficial de la Defensoría), casos ubicados en la provincia y estados de emergencia vigentes con su decreto.
 
 ## 5. Entregar
 

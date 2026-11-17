@@ -98,10 +98,14 @@ def _tablas() -> dict[str, pd.DataFrame]:
     casos = pd.DataFrame([dict(reporte="N.° 269", mes="2026-08", caso="Caso de prueba", tipo="Socioambiental",
                                estado="Activo", departamento="LA LIBERTAD", provincia="PATAZ",
                                distrito="PATAZ", pagina=40)])
+    conflictos_dep = pd.DataFrame([
+        dict(departamento="LA LIBERTAD", conflictos=5, activos=4, latentes=1),
+        dict(departamento="LORETO", conflictos=18, activos=12, latentes=6),
+    ])
     return {"sucamec_resoluciones": sucamec, "empresas": empresas, "sunat_ruc": sunat,
             "proveedores_oece": oece, "benchmark_contratos": contratos,
             "benchmark_departamento": bench, "conflictos_provincia": conflictos_prov,
-            "conflictos": casos}
+            "conflictos": casos, "conflictos_departamento": conflictos_dep}
 
 
 @pytest.fixture
@@ -200,8 +204,10 @@ def test_evaluar_oferta_semaforo(datos_falsos):
 
 def test_riesgo_zona_por_provincia(datos_falsos):
     r = server.riesgo_zona("La Libertad", "Pataz")
-    assert r["casos_provincia"] == 4 and r["socioambientales_provincia"] == 3
-    assert r["casos_departamento"] == 5
+    assert r["casos_provincia"] == 4
+    assert r["conflictos_departamento"] == 5 and r["activos_departamento"] == 4
+    assert r["ranking_departamento"] == 2
+    assert isinstance(r["estados_emergencia"], list)
     assert r["nivel"] == "extraido"
 
 

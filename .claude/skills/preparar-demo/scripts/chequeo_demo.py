@@ -105,8 +105,9 @@ def caso_del_demo() -> bool:
     print(f"  OK     piso legal de un puesto 24/7: S/ {piso:,.0f} por mes")
     r = datos.riesgo_zona(c["departamento"], c["provincia"])
     if "casos_provincia" in r:
-        print(f"  OK     riesgo: {r['casos_provincia']} conflictos en la provincia, "
-              f"{r.get('casos_departamento', 0)} en el departamento")
+        print(f"  OK     riesgo: {r['casos_provincia']} casos en la provincia, "
+              f"{r.get('conflictos_departamento', 0)} conflictos en el departamento, "
+              f"{len(r.get('estados_emergencia', []))} estados de emergencia")
     else:
         print("  FALTA  sin datos de conflictos")
     return bool(len(empresas)) and bool(b) and "casos_provincia" in r
