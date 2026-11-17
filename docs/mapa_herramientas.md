@@ -29,6 +29,9 @@ Para encontrar una sección: busca su número en el repositorio (por ejemplo `03
 | 03.11 Lectura y limpieza: filtra los RUC de interés línea por línea | `garita/sunat.py` | `filtrar_padron` |
 | 03.12 Salida: `sunat_ruc.parquet` | `garita/sunat.py` | `ejecutar` |
 | 03.13 Descarga: el reporte de conflictos más reciente desde el índice de la Defensoría | `garita/defensoria.py` | `ultimo_reporte` |
+| 03.14 Descarga: Excel de denuncias y tasa de delitos por departamento del INEI (SIDPOL) | `garita/delitos.py` | `descargar` |
+| 03.15 Lectura: detecta la fila de años y toma el último año con datos | `garita/delitos.py` | `_leer` |
+| 03.16 Limpieza y salida: departamentos canónicos, Lima sumada, ranking | `garita/delitos.py` | `ejecutar` |
 
 ## 08 · LLMs con salidas estructuradas
 
@@ -65,8 +68,8 @@ Para encontrar una sección: busca su número en el repositorio (por ejemplo `03
 |---|---|---|
 | 06.1 Capa: disuelve 1,834 distritos en 197 provincias y calcula centroides en UTM | `garita/geo.py` | `construir_capas` |
 | 06.2 Unión: conflictos por provincia sobre la capa | `garita/geo.py` | `unir_conflictos` |
-| 06.3 Mapa: coroplético por provincia con el sitio del cliente y las sedes | `garita/geo.py` | `mapa_riesgo`, `centroide`, `distancia_km` |
-| 06.4 Mapa en la app | `app.py` | pestaña 2 |
+| 06.3 Mapa nacional: regiones coloreadas por delitos, conflictos o empresas; región elegida con sus provincias; íconos de estados de emergencia según el motivo; casos de la Defensoría; burbujas de empresas por provincia | `garita/geo.py` | `capa_departamentos`, `mapa_region`, `_icono_emergencia`, `centroide`, `distancia_km` |
+| 06.4 Mapa en la app con selector de región | `app.py` | pestaña 2 |
 
 ## 05 · Dashboards (Streamlit)
 
@@ -75,7 +78,10 @@ Para encontrar una sección: busca su número en el repositorio (por ejemplo `03
 | 05.1 Página: configuración, estilos y estado de la sesión | `app.py` | — |
 | 05.2 Barra lateral: modo de la app y fechas de corte | `app.py` | — |
 | 05.3 Pestaña 1: el pedido (texto libre y detalle) | `app.py` | — |
-| 05.4 Pestaña 2: riesgo de la zona | `app.py` | — |
+| 05.4 Pestaña 2: mapa de riesgo por región (cualquier región del Perú) | `app.py` | — |
+| 05.11 Callbacks: interpretar el pedido y llevar la región al pedido sin que los campos retrocedan | `app.py` | `_interpretar`, `_usar_region` |
+| 05.12 Tarjetas de la región: delitos, conflictos, emergencias y empresas | `app.py` | — |
+| 05.13 Gráfico: la región frente a las otras 24 | `app.py` | — |
 | 05.5–05.6 Pestaña 3: lista corta y gráfico del desglose del puntaje | `app.py` | — |
 | 05.7–05.8 Pestaña 4: benchmark, piso legal, evaluación de una oferta y gráfico de contratos | `app.py` | — |
 | 05.9 Pestaña 5: documentos y calendario de vencimientos | `app.py` | — |
@@ -111,7 +117,7 @@ Para encontrar una sección: busca su número en el repositorio (por ejemplo `03
 |---|---|---|
 | G.1 Puntaje de confianza: siete componentes con peso, nivel y fuente | `garita/confianza.py` | `puntaje_confianza` |
 | G.2 Lista corta ordenada por puntaje y cercanía | `garita/confianza.py` | `lista_corta` |
-| Acceso único a los datos procesados (app, MCP y skill) | `garita/datos.py` | `buscar_empresas`, `ficha_empresa`, `benchmark`, `riesgo_zona`, `estados_emergencia` |
+| Acceso único a los datos procesados (app, MCP y skill) | `garita/datos.py` | `buscar_empresas`, `ficha_empresa`, `benchmark`, `riesgo_zona`, `estados_emergencia`, `ranking_regiones`, `provincias_region`, `empresas_por_provincia` |
 | Pedido y solicitud de propuesta | `garita/pedido.py` | `Pedido`, `solicitud_docx`, `solicitud_xlsx`, `calendario_ics` |
 | Orquestador del pipeline | `run_pipeline.py` | `main` |
 

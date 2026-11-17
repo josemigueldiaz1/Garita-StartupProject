@@ -38,7 +38,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 
 **La solución.** El cliente describe su necesidad (lugar, puestos, horario, perfil, armamento y equipamiento) y Garita le devuelve:
 
-1. **El riesgo de la zona**: conflictos sociales del departamento (Defensoría), casos ubicados en la provincia y estados de emergencia vigentes, en un mapa.
+1. **Un mapa de riesgo para cualquier región del Perú**: delitos denunciados por cada 10 mil habitantes (INEI, con datos del SIDPOL de la PNP), conflictos sociales (Defensoría), estados de emergencia vigentes con su motivo (minería ilegal, crimen organizado, narcotráfico) y cuántas empresas autorizadas tienen sede en cada provincia.
 2. **Una lista corta de empresas con autorización vigente de SUCAMEC** para esa modalidad y departamento (y con armas si lo pide), cada una con un **puntaje de confianza de 0 a 100 que muestra de qué se compone**: autorización y vigencia (SUCAMEC), RUC activo y habido (SUNAT), habilitación para contratar con el Estado, penalidades, sanciones y contratos de vigilancia ganados (OECE), y cobertura.
 3. **El precio justo**: rango de soles por puesto 24/7-mes en su departamento, el estimado de su pedido y una alerta cuando una oferta queda por debajo del **piso legal** del puesto.
 4. **La lectura de cartas fianza y pólizas** con OCR y LLM, y un calendario de vencimientos (.ics).
@@ -64,7 +64,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 
 **El flujo del demo (2 minutos):** "vigilancia con armas, 8 puestos 24/7, campamento minero en Pataz, La Libertad" → riesgo de la zona → lista corta con puntaje → precio y alerta de una oferta bajo el piso → lectura de una carta fianza escaneada → solicitud de propuesta en Word. Guion completo en [`docs/guion_demo.md`](docs/guion_demo.md).
 
-| Pedido y riesgo de la zona | Proveedores con puntaje | Precio y piso legal |
+| Mapa de riesgo por región | Proveedores con puntaje | Precio y piso legal |
 |---|---|---|
 | ![Riesgo](docs/capturas/1_riesgo.png) | ![Proveedores](docs/capturas/2_proveedores.png) | ![Precio](docs/capturas/3_precio.png) |
 
@@ -77,6 +77,7 @@ flowchart LR
         O[OECE<br/>API OCDS + ficha de proveedores]
         N[SUNAT<br/>padrón reducido]
         D[Defensoría<br/>reporte PDF]
+        I[INEI<br/>delitos por región]
         G[Límites distritales<br/>sesión 06]
     end
     subgraph Pipeline offline · run_pipeline.py
@@ -89,8 +90,9 @@ flowchart LR
         N -->|03| P7[RUC activo y habido]
         D -->|03 + 10| P8[conflictos por región y provincia]
         G -->|06 GeoPandas| P9[provincias]
+        I -->|03 Excel| P10[delitos por 10 mil hab.]
     end
-    P1 & P5 & P6 & P7 & P8 & P9 --> DP[(data/processed<br/>versionado = modo demo)]
+    P1 & P5 & P6 & P7 & P8 & P9 & P10 --> DP[(data/processed<br/>versionado = modo demo)]
     DP --> APP[App Streamlit · 05]
     DP --> MCP[MCP garita · 04]
     MCP --> SK[Skill evaluar-proveedor · 16]
@@ -137,7 +139,7 @@ El costo variable en tokens es menos del 0.1 % del precio. El costo real es vend
 
 **Las dos que justifican la rúbrica:**
 
-1. **Scraping y APIs (sesión 03).** Sin ella no hay producto: replica el formulario JSF de SUCAMEC (ViewState, botón Buscar y paginador de PrimeFaces, por departamento porque el buscador corta en 2,000), consume la API OCDS y la ficha de proveedores del OECE, el padrón de SUNAT y el índice de reportes de la Defensoría. Automatiza la verificación que hoy se hace a mano. → [`garita/sucamec.py`](garita/sucamec.py), [`garita/oece.py`](garita/oece.py), [`garita/sunat.py`](garita/sunat.py), [`garita/defensoria.py`](garita/defensoria.py), [`garita/red.py`](garita/red.py)
+1. **Scraping y APIs (sesión 03).** Sin ella no hay producto: replica el formulario JSF de SUCAMEC (ViewState, botón Buscar y paginador de PrimeFaces, por departamento porque el buscador corta en 2,000), consume la API OCDS y la ficha de proveedores del OECE, el padrón de SUNAT, el índice de reportes de la Defensoría y los Excel de delitos por departamento del INEI. Automatiza la verificación que hoy se hace a mano. → [`garita/sucamec.py`](garita/sucamec.py), [`garita/oece.py`](garita/oece.py), [`garita/sunat.py`](garita/sunat.py), [`garita/defensoria.py`](garita/defensoria.py), [`garita/delitos.py`](garita/delitos.py), [`garita/red.py`](garita/red.py)
 2. **LLMs con salidas estructuradas (sesión 08).** Es el insight: convierte Bases en texto libre y OCR sucio en puestos, horas, armado, plazo y perfil, en JSON validado con Pydantic, para que Python calcule un precio por puesto-mes que hoy no existe. → [`garita/esquemas.py`](garita/esquemas.py), [`garita/llm.py`](garita/llm.py), [`garita/extraccion.py`](garita/extraccion.py), [`garita/costos.py`](garita/costos.py), [`garita/benchmark.py`](garita/benchmark.py)
 
 **También dentro del producto:**
@@ -145,7 +147,7 @@ El costo variable en tokens es menos del 0.1 % del precio. El costo real es vend
 | Herramienta | Para qué | Dónde |
 |---|---|---|
 | Document AI (10) | Triaje texto/imagen, OCR solo en páginas escaneadas, TDR de las Bases, cuadros de la Defensoría, documentos subidos | [`garita/documentos.py`](garita/documentos.py), [`garita/defensoria.py`](garita/defensoria.py) |
-| GeoPandas y Folium (06) | Provincias desde distritos, centroides, distancia sede–sitio, mapa de riesgo | [`garita/geo.py`](garita/geo.py) |
+| GeoPandas y Folium (06) | Provincias y regiones desde distritos, centroides, distancia sede–sitio, mapa nacional de riesgo con íconos por motivo de emergencia y empresas por provincia | [`garita/geo.py`](garita/geo.py) |
 | Dashboards (05) | La app de 6 pestañas | [`app.py`](app.py) |
 | MCP (04) | "Garita para Claude": 8 herramientas de consulta, plugin instalable | [`mcp_server/server.py`](mcp_server/server.py), [`.claude-plugin/`](.claude-plugin/) |
 | Skills de Claude Code (16) | Skill del producto `evaluar-proveedor-seguridad` y 4 de desarrollo | [`skills/`](skills/), [`.claude/skills/`](.claude/skills/) |

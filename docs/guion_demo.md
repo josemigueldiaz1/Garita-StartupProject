@@ -6,6 +6,7 @@
 ## Antes de entrar (7:10 a 7:25 a. m.)
 
 - [ ] **7:10** Abrir la app. Si aparece "Yes, get this app back up", hacer clic y esperar a que cargue: Streamlit Cloud duerme las apps sin uso.
+- [ ] **7:11** Abrir la pestaña "2 · Mapa de riesgo" una vez para que el mapa quede en caché.
 - [ ] **7:12** Precalentar el OCR: pestaña "5 · Documentos" → "Usar la versión escaneada 🧪". La primera vez tarda ~30 s porque carga el modelo; después queda en memoria y en la demo responde en segundos.
 - [ ] **7:15** Recargar la página (F5) para empezar limpio en "1 · Pedido". Zoom del navegador al 110 %.
 - [ ] Tener en otra pestaña el video de respaldo y, en una terminal, la app local lista (`uv run streamlit run app.py`).
@@ -20,7 +21,7 @@
 | Tiempo | Pestaña | Qué hacer | Qué decir |
 |---|---|---|---|
 | 0:30 – 0:45 | **1 · Pedido** | Clic en **Interpretar pedido**. Señalar que se llenaron Pataz, 8 puestos, 24 h, con armas | "El cliente escribe lo que necesita como se lo diría a un proveedor, y la IA lo convierte en un pedido estructurado: lugar, puestos, horario, armamento, perfil y equipamiento." |
-| 0:45 – 1:05 | **2 · Riesgo de la zona** | Señalar el aviso de **riesgo alto**, el estado de emergencia y Pataz marcado con ★ en el mapa | "Garita cruza el reporte de la Defensoría del Pueblo con los estados de emergencia vigentes: Pataz tiene un decreto de emergencia hasta el 1 de diciembre por minería ilegal. Por eso recomienda vigilancia armada, sede cercana y supervisión 24 horas." |
+| 0:45 – 1:05 | **2 · Mapa de riesgo** | Señalar las 4 tarjetas, el aviso de **riesgo alto** y en el mapa: ★ Pataz, ◆ minería ilegal, burbuja naranja grande en Trujillo. Si sobra tiempo, cambiar la región a Cajamarca y volver | "Esto sirve para cualquier región del Perú. En La Libertad hay 147 denuncias por cada 10 mil habitantes, cinco conflictos sociales y cuatro estados de emergencia; Pataz, por minería ilegal. Y aquí se ve el problema: casi todas las 174 empresas autorizadas están en Trujillo, a horas del campamento. Por eso Garita recomienda vigilancia armada y sede cercana." |
 | 1:05 – 1:40 | **3 · Proveedores** | Mostrar la tabla; abrir la primera empresa y su gráfico de puntaje | "En el registro de SUCAMEC hay 1,020 empresas con autorización vigente; para vigilancia con armas en La Libertad, 159. Cada una tiene un puntaje de 0 a 100 que muestra de qué se compone: autorización y vencimiento en SUCAMEC, RUC habido en SUNAT, penalidades y contratos ganados en el OECE. Cada dato tiene su fuente y su link." |
 | 1:40 – 2:10 | **4 · Precio** | Mostrar la mediana y el gráfico. En "Evalúa una oferta" escribir **7000** y mostrar la alerta roja | "Este es el insight: los contratos públicos dicen '5 agentes turno mañana, 5 turno noche' en PDFs escaneados. Con OCR y un LLM los convertimos en puestos y meses: 75 contratos válidos de 19 departamentos, mediana de 9,074 soles por puesto 24/7 al mes. Y el 27 % de los contratos del Estado se paga por debajo de la planilla mínima. Una oferta de 7,000 no alcanza para pagar sueldos: alerta roja." |
 | 2:10 – 2:20 | **5 · Documentos** | Clic en **Usar la versión escaneada 🧪** y señalar monto, fecha y "Vigente: vence en … días" | "El proveedor entrega su carta fianza escaneada; Garita la lee con OCR y saca el monto y el vencimiento. Es un documento sintético y la app lo marca así." |

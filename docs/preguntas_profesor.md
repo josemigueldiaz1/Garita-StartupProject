@@ -42,6 +42,9 @@ Busca el número de sección (por ejemplo `03.2`) en el repo para llegar directo
 
 | Pregunta | Respuesta corta | Dónde |
 |---|---|---|
+| ¿De dónde salen los delitos del mapa? | Excel del índice temático de Delitos del INEI, con las denuncias del SIDPOL de la PNP: número y tasa por 10 mil habitantes, 2024. No hay serie oficial descargable por provincia, por eso los delitos van por región y lo provincial son empresas, emergencias y casos. | `garita/delitos.py` · 03.14 a 03.16 |
+| ¿Qué significan los íconos del mapa? | Rombo rojo: estado de emergencia por minería ilegal; mira: crimen organizado; hoja: narcotráfico; fuego: casos de la Defensoría; burbuja naranja: empresas con sede autorizada (tamaño ∝ √n); estrella: el sitio del cliente. | `garita/geo.py` · 06.3 `mapa_region`, `_icono_emergencia` |
+| ¿Por qué antes "retrocedían" los números al subir la estatura? | Los widgets se creaban con `value=` del valor anterior: cada clic los volvía widgets nuevos. Ahora cada uno tiene clave fija en `st.session_state` y el botón escribe por callback. | `app.py` · 05.1 `CLAVES` y 05.11 |
 | ¿De dónde salen las provincias? | Disuelvo los 1,834 distritos de la sesión 06 por (departamento, provincia) con GeoPandas y simplifico la geometría. | `garita/geo.py` · 06.1 |
 | ¿Cómo calculas la distancia de la sede al sitio? | Centroide del distrito de la sede (calculado en UTM 18S) y haversine; es línea recta. | `garita/geo.py` `centroide`, `distancia_km` |
 | ¿Cómo se calcula el puntaje de confianza? | Siete componentes con peso en `config.yaml` (autorización 30, vigencia 10, SUNAT 15, registro de proveedores 15, penalidades 10, experiencia 15, cobertura 5), cada uno con nivel y fuente. | `garita/confianza.py` · G.1 |
