@@ -140,7 +140,7 @@ llm:
   modelo: "deepseek-chat"
   base_url: "https://api.deepseek.com"
   temperatura: 0.0
-  max_tokens: 1200
+  max_tokens: 2500              # una tabla de 15 puestos ya ocupa ~1,200 tokens de salida
   timeout_seg: 90
   tope_usd_defecto: 3.00        # se puede bajar con GARITA_TOPE_USD en .env
   hilos: 4                      # llamadas en paralelo en el pipeline

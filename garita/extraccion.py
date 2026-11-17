@@ -142,7 +142,9 @@ def extraer_proceso(cli: ClienteLLM, fila) -> dict:
 
 
 # --- 08.8 Lote: extrae todos los procesos con texto de TDR, con cache por ocid
-def ejecutar(cfg: Config | None = None) -> dict:
+def ejecutar(cfg: Config | None = None, reintentar_sin_puestos: bool = False) -> dict:
+    """Con `reintentar_sin_puestos=True` vuelve a extraer los procesos en los que el modelo
+    no encontro puestos (util despues de mejorar la lectura de las Bases)."""
     cfg = cfg or load_config()
     log = configurar_logging("garita.extraccion")
     cli = cliente()
@@ -155,7 +157,10 @@ def ejecutar(cfg: Config | None = None) -> dict:
         contratos[["ocid", "entidad", "descripcion", "duracion_dias"]], on="ocid", how="left")
     destino = cfg.processed_dir / "extracciones_llm.parquet"
     previas = pd.read_parquet(destino) if destino.exists() else pd.DataFrame(columns=["ocid", "error"])
-    hechas = set(previas.loc[previas["error"].fillna("") == "", "ocid"])
+    ok = previas["error"].fillna("") == ""
+    if reintentar_sin_puestos and "puede_extraer" in previas:
+        ok &= previas["puede_extraer"].fillna(False).astype(bool)
+    hechas = set(previas.loc[ok, "ocid"])
     pendientes = t[~t["ocid"].isin(hechas)]
     log.info("Extraccion LLM: %d con texto, %d ya extraidos, %d pendientes (tope US$%.2f)",
              len(t), len(hechas), len(pendientes), cfg.tope_usd())
