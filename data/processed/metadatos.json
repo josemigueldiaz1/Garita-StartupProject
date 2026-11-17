@@ -1,21 +1,22 @@
 {
   "extraccion_llm": {
-    "fecha_corte": "2026-11-16",
-    "extraidos": 161,
-    "con_puestos": 34,
-    "errores": 0,
-    "costo_usd_lote": 0.15795
+    "fecha_corte": "2026-11-17",
+    "extraidos": 172,
+    "con_puestos": 79,
+    "errores": 3,
+    "costo_usd_lote": 0.36621
   },
   "benchmark": {
-    "fecha_corte": "2026-11-16",
-    "contratos_con_extraccion": 161,
-    "validos": 33,
-    "mediana_nacional": 9033.0,
-    "pct_bajo_piso": 45.5,
-    "piso_legal_24h": 8496.29,
+    "fecha_corte": "2026-11-17",
+    "contratos_con_extraccion": 175,
+    "validos": 75,
+    "mediana_nacional": 9074.0,
+    "pct_bajo_piso": 26.7,
+    "piso_legal_24h": 7723.9,
     "excluidos": {
-      "las Bases no dicen cuantos puestos": 127,
-      "extraccion de confianza baja": 1
+      "las Bases no dicen cuantos puestos": 93,
+      "extraccion de confianza baja": 4,
+      "error de extraccion": 3
     }
   },
   "sucamec": {
@@ -64,5 +65,12 @@
     "filas": 49,
     "vigentes": 31,
     "fuente": "data/manual/estados_emergencia.csv"
+  },
+  "documentos": {
+    "fecha_corte": "2026-11-17",
+    "procesos": 200,
+    "con_texto": 175,
+    "con_ocr": 137,
+    "errores": 25
   }
 }
