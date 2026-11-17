@@ -72,5 +72,12 @@
     "con_texto": 175,
     "con_ocr": 137,
     "errores": 25
+  },
+  "delitos": {
+    "fecha_corte": "2026-11-17",
+    "anio": 2024,
+    "departamentos": 25,
+    "denuncias_total": 468473,
+    "url": "https://www.inei.gob.pe/estadisticas/indice-tematico/crimes/"
   }
 }

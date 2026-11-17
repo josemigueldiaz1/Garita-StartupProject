@@ -16,6 +16,7 @@ Cada paso es re-ejecutable: lo ya descargado o ya extraido no se vuelve a pedir 
 | proveedores | 03 Scraping y APIs    | ficha OECE: inhabilitacion, penalidades, sanciones    |
 | geo         | 06 GeoPandas y Folium | provincias disueltas desde distritos y centroides     |
 | defensoria  | 03 + 10 Document AI   | conflictos por region y provincia desde el PDF        |
+| delitos     | 03 Scraping y APIs    | denuncias por departamento (INEI, SIDPOL de la PNP)    |
 | documentos  | 10 Document AI        | Bases: triaje, OCR solo en paginas imagen, TDR        |
 | extraer     | 08 LLM estructurado   | puestos, horas, armado y perfil en JSON + Pydantic    |
 | benchmark   | 08 (calculo Python)   | precio por puesto-mes y rango por departamento        |
@@ -34,7 +35,7 @@ import pandas as pd
 
 from garita.config import configurar_logging, load_config
 
-PASOS = ["sucamec", "oece", "sunat", "proveedores", "geo", "defensoria", "documentos",
+PASOS = ["sucamec", "oece", "sunat", "proveedores", "geo", "defensoria", "delitos", "documentos",
          "extraer", "benchmark", "metadatos"]
 POR_DEFECTO = [p for p in PASOS if p != "extraer"]
 
@@ -73,7 +74,7 @@ def metadatos(cfg, resultados: dict) -> dict:
     meta = json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else {}
     hoy = date.today().isoformat()
     nombres = {"sucamec": "sucamec", "oece": "oece", "sunat": "sunat",
-               "proveedores": "proveedores_oece", "defensoria": "defensoria",
+               "proveedores": "proveedores_oece", "defensoria": "defensoria", "delitos": "delitos",
                "documentos": "documentos", "extraer": "extraccion_llm", "benchmark": "benchmark"}
     for paso, r in resultados.items():
         if paso in nombres and isinstance(r, dict):
@@ -107,10 +108,11 @@ def main() -> None:
                 shutil.rmtree(ruta) if ruta.is_dir() else ruta.unlink()
                 log.info("--forzar: borrado %s", ruta)
 
-    from garita import benchmark, documentos, extraccion, oece, sucamec, sunat
+    from garita import benchmark, delitos, documentos, extraccion, oece, sucamec, sunat
 
     funciones = {"sucamec": sucamec.ejecutar, "oece": oece.ejecutar, "sunat": sunat.ejecutar,
                  "proveedores": paso_proveedores, "geo": paso_geo, "defensoria": paso_defensoria,
+                 "delitos": delitos.ejecutar,
                  "documentos": documentos.ejecutar, "extraer": extraccion.ejecutar,
                  "benchmark": benchmark.construir}
     resultados = {}
