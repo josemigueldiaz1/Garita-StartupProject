@@ -49,6 +49,12 @@ sucamec:
     "12": "TECNOLOGIA - CENTRALES RECEPTORAS"
     "19": "TECNOLOGIA - SEGURIDAD"
     "8": "CONSULTORIA Y ASESORIA"
+  # Valores del <select> de departamentos. Se consulta uno por uno porque el
+  # buscador corta en 2,000 resultados.
+  departamentos: [AMAZONAS, ANCASH, APURIMAC, AREQUIPA, AYACUCHO, CAJAMARCA, CALLAO,
+                  CUSCO, HUANCAVELICA, HUANUCO, ICA, JUNIN, LA LIBERTAD, LAMBAYEQUE,
+                  LIMA, LORETO, MADRE DE DIOS, MOQUEGUA, PASCO, PIURA, PUNO,
+                  SAN MARTIN, TACNA, TUMBES, UCAYALI]
 
 # -----------------------------------------------------------------------------
 #  OECE — contrataciones abiertas (OCDS). Misma API que el HW3.
@@ -57,14 +63,25 @@ oece:
   api_base: "https://contratacionesabiertas.oece.gob.pe/api/v1"
   fuente: "seace_v3"
   formato: "csv_es"
-  # Seis meses bastan para el benchmark. Ampliar aqui si hacen falta mas casos.
+  # Doce meses para la experiencia publica de cada proveedor (solo lectura de CSV,
+  # sin costo). El LLM lee las Bases solo de los procesos mas recientes, hasta
+  # max_procesos_llm: con eso el benchmark tiene casos suficientes y el gasto queda
+  # acotado.
   meses:
+    - {anio: 2025, mes: "11"}
+    - {anio: 2025, mes: "12"}
+    - {anio: 2026, mes: "01"}
+    - {anio: 2026, mes: "02"}
+    - {anio: 2026, mes: "03"}
+    - {anio: 2026, mes: "04"}
     - {anio: 2026, mes: "05"}
     - {anio: 2026, mes: "06"}
     - {anio: 2026, mes: "07"}
     - {anio: 2026, mes: "08"}
     - {anio: 2026, mes: "09"}
     - {anio: 2026, mes: "10"}
+  max_procesos_llm: 160
+  segundos_entre_fichas: 0.5
   # Un proceso entra si algun item tiene esta clasificacion del catalogo CUBSO o si
   # su titulo cumple el patron Y no cumple la exclusion (uniformes, camaras, obras).
   clasificacion_vigilancia: "SERVICIO DE SEGURIDAD Y VIGILANCIA"
@@ -99,7 +116,7 @@ geo:
 documentos:
   umbral_caracteres: 200        # una pagina con menos texto se trata como imagen
   max_paginas_ocr: 8            # tope de paginas escaneadas que se pasan por OCR por PDF
-  max_caracteres_llm: 14000     # texto de los TDR que se envia al LLM por proceso
+  max_caracteres_llm: 24000     # texto de los TDR que se envia al LLM por proceso (~8 mil tokens)
   palabras_tdr:                 # puntuan una pagina como "terminos de referencia"
     - "puesto"
     - "puestos"
@@ -145,8 +162,9 @@ costos:
 #  Costo laboral minimo de un puesto (alerta de informalidad)
 # -----------------------------------------------------------------------------
 costo_laboral:
-  rmv: 1130                     # remuneracion minima vital vigente (S/)
-  rmv_fuente: "https://www.gob.pe/institucion/mtpe/normas-legales/6328574-006-2024-tr"
+  rmv: 1230                     # remuneracion minima vital vigente desde el 01/10/2026 (S/)
+  rmv_norma: "DS 015-2026-TR"
+  rmv_fuente: "https://busquedas.elperuano.pe/dispositivo/EX/2559163-1"
   asignacion_familiar_pct: 0.10
   recargo_nocturno_pct: 0.35    # sobre la RMV, para horas entre 10 p. m. y 6 a. m.
   essalud_pct: 0.09
