@@ -223,15 +223,20 @@ def resumir_empresas(res: pd.DataFrame) -> pd.DataFrame:
 
 
 # --- 03.4 Salida: guarda data/processed/sucamec_resoluciones y empresas
-def ejecutar(cfg: Config | None = None) -> dict:
+def ejecutar(cfg: Config | None = None, solo: list[str] | None = None) -> dict:
+    """
+    Descarga el registro completo, o solo las modalidades de `solo` (codigos del formulario)
+    y las agrega a lo ya descargado, reemplazando esas modalidades.
+    """
     cfg = cfg or load_config()
     log = configurar_logging("garita.sucamec")
     log.info("SUCAMEC: descargando el registro de empresas autorizadas")
     form = FormularioSucamec(cfg)
+    modalidades = {c: e for c, e in cfg.sucamec["modalidades"].items() if not solo or c in solo}
     crudas: list[dict] = []
     for dep in cfg.sucamec["departamentos"]:
         antes = len(crudas)
-        for codigo, etiqueta in cfg.sucamec["modalidades"].items():
+        for codigo, etiqueta in modalidades.items():
             if codigo in CON_FILTRO_ARMAS:
                 for armas in ("0", "1"):
                     crudas += descargar_modalidad(form, codigo, etiqueta, armas, dep)
@@ -240,8 +245,13 @@ def ejecutar(cfg: Config | None = None) -> dict:
         log.info("  %-14s %5d filas", dep, len(crudas) - antes)
     hoy = date.today()
     res = limpiar(crudas, hoy)
-    emp = resumir_empresas(res)
     out = cfg.processed_dir
+    previo = out / "sucamec_resoluciones.parquet"
+    if solo and previo.exists():
+        anterior = pd.read_parquet(previo)
+        anterior = anterior[~anterior["modalidad"].isin(set(modalidades.values()))]
+        res = pd.concat([anterior, res], ignore_index=True)
+    emp = resumir_empresas(res)
     res.to_parquet(out / "sucamec_resoluciones.parquet", index=False)
     emp.to_parquet(out / "empresas.parquet", index=False)
     resumen = {

@@ -254,8 +254,8 @@ with t1:
         st.multiselect("Equipamiento", list(EQUIPAMIENTO), key="p_equip")
         verificables = [e for e in st.session_state.p_equip if EQUIPAMIENTO[e]]
         if verificables:
-            st.caption("✅ Se verifica contra SUCAMEC: " + ", ".join(verificables) +
-                       ". El resto lo declara la empresa.")
+            st.caption("✅ Se verifica contra SUCAMEC (autorización de tecnología de seguridad): " +
+                       ", ".join(verificables) + ". El resto lo declara la empresa.")
         st.text_input("Notas para los proveedores", key="p_notas")
     P = Pedido(**{campo: st.session_state[clave] for campo, clave in CLAVES.items()})
     st.info(f"**Tu pedido:** {P.n_puestos} puestos de {P.horas_por_dia} h, {P.dias_por_semana} días, "
@@ -373,13 +373,15 @@ with t3:
         minimo = a.slider("Puntaje mínimo", 0, 100, 50, 5)
         solo_prov = b.toggle(f"Solo con sede en {P.provincia.title()}", False)
         tec = [EQUIPAMIENTO[e] for e in P.equipamiento if EQUIPAMIENTO[e]]
-        exigir_tec = c.toggle("Exigir tecnología autorizada (CCTV, accesos, GPS)", False, disabled=not tec)
+        exigir_tec = c.toggle("Exigir tecnología autorizada (CCTV, accesos, GPS)", False, disabled=not tec,
+                              help="Deja solo empresas que además tienen autorización vigente de SUCAMEC "
+                                   "para prestar tecnología de seguridad (en cualquier sede del país).")
         f = lista[lista["puntaje"] >= minimo]
         if solo_prov:
             f = f[f["sede_en_provincia"]]
         if exigir_tec and tec:
             res = datos.tabla("sucamec_resoluciones")
-            con_tec = set(res[res["modalidad"].isin(tec) & res["vigente"]]["ruc"])
+            con_tec = set(res[res["modalidad"].str.startswith("TECNOLOGIA") & res["vigente"]]["ruc"])
             f = f[f["ruc"].isin(con_tec)]
         st.caption(f"{len(lista)} empresas autorizadas · {len(f)} cumplen tus filtros · "
                    f"{nivel('verificado')} contra el registro de SUCAMEC del {meta.get('sucamec', {}).get('fecha_corte', '')}")

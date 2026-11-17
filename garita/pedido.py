@@ -28,15 +28,17 @@ from .datos import normalizar, tabla
 
 TIPOS_SITIO = ["mina", "campamento", "puerto", "planta", "almacen", "oficina", "otro"]
 EQUIPAMIENTO = {
-    # opcion -> modalidad SUCAMEC que la respalda (None = solo declarada por la empresa)
+    # opcion -> autorizacion SUCAMEC que la respalda (None = solo declarada por la empresa).
+    # SUCAMEC autoriza la tecnologia con una modalidad general ("tecnologia de seguridad");
+    # las submodalidades del formulario (video, GPS, accesos) no tienen empresas registradas.
     "Radios de comunicacion": None,
     "Vehiculo de supervision": None,
     "Motocicleta para rondas": None,
     "Detector de metales": None,
-    "Camaras con monitoreo a distancia (CCTV)": "TECNOLOGIA - VIDEO A DISTANCIA",
-    "Control de accesos": "TECNOLOGIA - CONTROL DE ACCESOS",
-    "Rastreo GPS de unidades": "TECNOLOGIA - GPS",
-    "Central receptora de alarmas": "TECNOLOGIA - CENTRALES RECEPTORAS",
+    "Camaras con monitoreo a distancia (CCTV)": "TECNOLOGIA DE SEGURIDAD",
+    "Control de accesos": "TECNOLOGIA DE SEGURIDAD",
+    "Rastreo GPS de unidades": "TECNOLOGIA DE SEGURIDAD",
+    "Central receptora de alarmas": "TECNOLOGIA DE SEGURIDAD",
 }
 ARMAS = ["Revolver calibre 38", "Pistola 9 mm", "Escopeta de perdigones", "Lo que defina la empresa"]
 

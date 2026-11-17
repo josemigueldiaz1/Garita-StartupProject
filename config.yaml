@@ -39,15 +39,15 @@ sucamec:
   # Codigos internos del <select> de modalidades. Se descargan las que importan a
   # un comprador de seguridad; el resto (consultoria individual, cuenta propia)
   # no ofrece servicio a terceros.
+  # Tecnologia: el menu ofrece submodalidades (video, GPS, accesos), pero el 17/11/2026
+  # tenian 0 empresas; las autorizaciones reales estan en la modalidad general "20"
+  # (235 resoluciones). Por eso el equipamiento tecnologico se verifica contra ella.
   modalidades:
     "1": "VIGILANCIA PRIVADA"
     "5": "PROTECCION PERSONAL"
     "3": "TRANSPORTE DE DINERO Y VALORES"
-    "15": "TECNOLOGIA - VIDEO A DISTANCIA"
-    "13": "TECNOLOGIA - GPS"
-    "17": "TECNOLOGIA - CONTROL DE ACCESOS"
+    "20": "TECNOLOGIA DE SEGURIDAD"
     "12": "TECNOLOGIA - CENTRALES RECEPTORAS"
-    "19": "TECNOLOGIA - SEGURIDAD"
     "8": "CONSULTORIA Y ASESORIA"
   # Valores del <select> de departamentos. Se consulta uno por uno porque el
   # buscador corta en 2,000 resultados.

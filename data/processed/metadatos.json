@@ -20,12 +20,13 @@
     }
   },
   "sucamec": {
-    "fecha_corte": "2026-11-16",
+    "fecha_corte": "2026-11-17",
     "url": "https://www.sucamec.gob.pe/rgGSSP/aplicacion/resoluciones/List.xhtml",
-    "filas": 2927,
-    "vigentes": 2927,
-    "empresas_con_autorizacion_vigente": 1020,
-    "empresas_vigilancia": 1004
+    "filas": 3153,
+    "vigentes": 3153,
+    "empresas_con_autorizacion_vigente": 1041,
+    "empresas_vigilancia": 1004,
+    "empresas_tecnologia": 135
   },
   "oece": {
     "fecha_corte": "2026-11-16",
