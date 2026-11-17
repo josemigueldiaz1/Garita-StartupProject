@@ -9,12 +9,15 @@
   "benchmark": {
     "fecha_corte": "2026-11-17",
     "contratos_con_extraccion": 175,
-    "validos": 75,
-    "mediana_nacional": 8093.0,
-    "pct_bajo_piso": 41.3,
+    "validos": 60,
+    "departamentos": 18,
+    "mediana_agentes_por_puesto": 2.0,
+    "mediana_nacional": 8201.0,
+    "pct_bajo_piso": 35.0,
     "piso_legal_24h": 7723.9,
     "excluidos": {
       "las Bases no dicen cuantos puestos": 93,
+      "puestos inconsistentes con los agentes de las Bases": 15,
       "extraccion de confianza baja": 4,
       "error de extraccion": 3
     }

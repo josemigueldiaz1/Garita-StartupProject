@@ -122,6 +122,7 @@ def precio_puesto_mes(monto: float, puestos_24h_equiv: float, meses: float) -> f
 
 
 PRECIO_MIN, PRECIO_MAX = 1500, 50000
+AGENTES_POR_PUESTO = (2.0, 5.0)
 
 
 def construir(cfg: Config | None = None) -> dict:
@@ -158,6 +159,15 @@ def construir(cfg: Config | None = None) -> dict:
     motivo[(motivo == "") & ~b["puede_extraer"].fillna(False).astype(bool)] = "las Bases no dicen cuantos puestos"
     motivo[(motivo == "") & (b["confianza"] == "baja")] = "extraccion de confianza baja"
     motivo[(motivo == "") & b["precio_puesto_mes"].isna()] = "faltan puestos o plazo"
+    # Consistencia con los agentes que declaran las mismas Bases. Un puesto 24/7 necesita
+    # entre 2 agentes (dos turnos de 12 h sin relevo) y ~5 (3.8 legales mas descanseros).
+    # La revision manual del 17/11/2026 encontro los dos errores tipicos del LLM: contar
+    # agentes como puestos ("53 agentes" -> 53 puestos 24/7, precio 4 veces menor) y contar
+    # una sede como un puesto ("03 agentes dia y 03 noche" -> 1 puesto, precio triple).
+    ratio = b["n_agentes"] / b["puestos_equivalentes_24h"]
+    inconsistente = b["n_agentes"].notna() & ((ratio < AGENTES_POR_PUESTO[0]) | (ratio > AGENTES_POR_PUESTO[1]))
+    motivo[(motivo == "") & inconsistente] = "puestos inconsistentes con los agentes de las Bases"
+    b["agentes_por_puesto"] = ratio.round(2)
     con_igv = b["precio_puesto_mes_con_igv"]
     motivo[(motivo == "") & ((con_igv < PRECIO_MIN) | (con_igv > PRECIO_MAX))] = \
         "precio fuera de rango plausible"
@@ -186,6 +196,8 @@ def construir(cfg: Config | None = None) -> dict:
     dep = pd.DataFrame(filas)
     dep.to_parquet(p / "benchmark_departamento.parquet", index=False)
     return {"contratos_con_extraccion": int(len(b)), "validos": int(len(v)),
+            "departamentos": int(v["departamento"].nunique()),
+            "mediana_agentes_por_puesto": float(v["agentes_por_puesto"].median()) if len(v) else None,
             "mediana_nacional": float(dep.iloc[0]["mediana"]) if len(v) else None,
             "pct_bajo_piso": float(dep.iloc[0]["pct_bajo_piso"]) if len(v) else None,
             "piso_legal_24h": piso24,
