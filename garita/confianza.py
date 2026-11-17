@@ -28,6 +28,8 @@ URL_SUNAT = "https://www.sunat.gob.pe/descargaPRR/padron_reducido_ruc.zip"
 URL_OCDS = "https://contratacionesabiertas.oece.gob.pe"
 
 
+# ===== LOGICA DE GARITA · cruza las fuentes de la herramienta 03 por RUC =====
+# --- G.1 Componentes: cada uno con puntos, maximo, nivel del dato y fuente
 def _comp(nombre, puntos, maximo, nivel, detalle, fuente):
     return {"nombre": nombre, "puntos": round(float(puntos), 1), "maximo": maximo,
             "nivel": nivel, "detalle": detalle, "fuente": fuente}
@@ -136,6 +138,7 @@ def puntaje_confianza(ruc: str, departamento: str, modalidad: str = "VIGILANCIA 
                            "Sanciones de SUCAMEC y SUNAFIL: sin descarga publica, integracion futura"]}
 
 
+# --- G.2 Lista corta: empresas autorizadas ordenadas por puntaje y cercania al sitio
 def lista_corta(departamento: str, modalidad: str = "VIGILANCIA PRIVADA", armas: str | None = None,
                 provincia: str | None = None, sitio: tuple[float, float] | None = None) -> pd.DataFrame:
     """Empresas autorizadas en el departamento, con puntaje, desglose y distancia al sitio."""

@@ -20,6 +20,8 @@ from .config import Config, load_config
 log = logging.getLogger("garita.red")
 
 
+# ===== HERRAMIENTA 03 · Scraping y APIs =====
+# --- 03.0 Cliente HTTP: pausa entre peticiones, reintentos y descarga atomica
 class Cliente:
     def __init__(self, cfg: Config | None = None, espera: float | None = None):
         cfg = cfg or load_config()
