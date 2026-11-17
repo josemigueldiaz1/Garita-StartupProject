@@ -14,7 +14,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 
 ## 2. Founder
 
-**José Miguel Díaz**, <<FOUNDER>>
+**José Miguel Díaz**, estudiante de la Universidad del Pacífico. Antes de Garita construí, en el mismo curso, un radar de compras públicas sobre los datos abiertos del OECE (20,422 procesos) y un asistente RAG sobre la Ley 32069 de contrataciones del Estado: conozco por dentro las fuentes que sostienen este producto y cómo se esconden los datos en ellas.
 
 ## 3. Problema
 
@@ -30,7 +30,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 - **Riesgo legal.** Si la empresa de seguridad no paga a sus trabajadores y su fianza no alcanza, la empresa usuaria responde solidariamente por los adeudos laborales ([Ley 27626, arts. 24 y 25](https://lpderecho.pe/ley-intermediacion-laboral-ley-27626/)).
 - **Riesgo de seguridad.** Una empresa sin autorización vigente para armas, o con personal informal, falla justo donde más se necesita. Pataz está en estado de emergencia por minería ilegal, con las Fuerzas Armadas a cargo del orden interno ([DS 137-2026-PCM](data/manual/estados_emergencia.csv)).
 - **Tiempo.** Verificar cada proveedor contra tres fuentes y comparar cotizaciones toma días; medir cuántos es uno de los objetivos de las conversaciones con usuarios.
-- **Informalidad del sector.** En los contratos públicos que leímos, **<<PCT_BAJO_PISO>>%** se pagan por debajo del piso legal de un puesto 24/7.
+- **Informalidad del sector.** En los contratos públicos de vigilancia que leímos, el **27%** se paga por debajo del costo mínimo de planilla de un puesto 24/7 vigente cuando se firmó.
 
 **Evidencia de usuarios.** En [`docs/research/`](docs/research/README.md) hay **3 entrevistas sintéticas**: un jefe de seguridad de una minera, el gerente de una empresa de seguridad y un analista de homologación. **Son personajes ficticios construidos con IA, no personas reales**, y cada dolor que expresan está respaldado por una fuente pública con link. Los tres coinciden por motivos distintos: hoy se contrata por boca a boca, y falta una herramienta formal que reúna legalidad, precio y riesgo. El comprador paga, la empresa formal gana argumentos y la homologadora es un canal. Las hipótesis H1 a H3 tienen respaldo público; la disposición a pagar (H4) no tiene evidencia y es lo primero que validaremos con usuarios reales, con el plan que está en la misma carpeta.
 
@@ -46,17 +46,17 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 
 **Cada dato dice de dónde viene**: ✅ verificado con fuente oficial (con link) · 🔎 extraído de un documento oficial con IA · 📝 declarado por la empresa · 🧪 sintético para el demo. Nunca se presenta un dato declarado o sintético como verificado.
 
-**El insight.** El precio de un puesto de vigilancia sí es público, pero está escondido. El Estado contrata cientos de servicios de vigilancia al año y publica cada contrato con su monto y sus Bases. Nadie los había leído: las Bases dicen "12 agentes, 2 turnos, 365 días" en texto libre, casi siempre con OCR sucio o escaneadas. Garita las lee y las convierte en puestos, horas y meses, y con eso calcula por primera vez un **precio por puesto-mes comparable**: mediana nacional de **S/ <<MEDIANA_PUESTO_MES>>** sobre **<<N_CONTRATOS>> contratos** de <<N_DEPARTAMENTOS>> departamentos.
+**El insight.** El precio de un puesto de vigilancia sí es público, pero está escondido. El Estado contrata cientos de servicios de vigilancia al año y publica cada contrato con su monto y sus Bases. Nadie los había leído: las Bases dicen "12 agentes, 2 turnos, 365 días" en texto libre, casi siempre con OCR sucio o escaneadas. Garita las lee y las convierte en puestos, horas y meses, y con eso calcula por primera vez un **precio por puesto-mes comparable**: mediana nacional de **S/ 9,074 por puesto 24/7 al mes** (rango típico S/ 7,276 a S/ 11,813) sobre **75 contratos de 19 departamentos**, leídos de 200 Bases con un costo total de US$ 0.56.
 
-**El segundo insight.** La confianza no está en un solo registro. Una empresa puede estar autorizada por SUCAMEC y estar inhabilitada para contratar con el Estado o tener el RUC no habido. Cruzar las fuentes por RUC es trivial con código y lento a mano. Hoy solo **<<N_EMPRESAS_VIGILANCIA>> empresas** tienen autorización vigente de vigilancia privada en el registro de SUCAMEC.
+**El segundo insight.** La confianza no está en un solo registro. Una empresa puede estar autorizada por SUCAMEC y estar inhabilitada para contratar con el Estado o tener el RUC no habido. Cruzar las fuentes por RUC es trivial con código y lento a mano. Hoy solo **1,004 empresas** tienen autorización vigente de vigilancia privada en el registro de SUCAMEC.
 
 ## 5. Why now
 
 - **Los datos ya son abiertos y legibles por máquina.** El OECE publica los contratos en el estándar OCDS con descargas mensuales y una API de proveedores; SUCAMEC mantiene en línea su registro con fecha de vencimiento ([SUCAMEC](https://www.gob.pe/institucion/sucamec/pages/9498-empresas-de-seguridad)).
-- **Leer documentos dejó de ser caro.** Hace tres años, extraer puestos y turnos de cientos de Bases escaneadas exigía entrenar un modelo o pagarle a una persona. Hoy un LLM con salida JSON lo hace por centavos: **todo el benchmark costó US$ <<COSTO_PIPELINE>>** en llamadas a la API.
+- **Leer documentos dejó de ser caro.** Hace tres años, extraer puestos y turnos de cientos de Bases escaneadas exigía entrenar un modelo o pagarle a una persona. Hoy un LLM con salida JSON lo hace por centavos: **todo el benchmark costó US$ 0.56** en llamadas a la API.
 - **La seguridad en zonas mineras es más crítica que nunca.** El reporte N.° 269 de la Defensoría (agosto de 2026) registra **188 conflictos sociales**; 92 son socioambientales y **61 de ellos están ligados a la minería** ([Defensoría](https://www.defensoria.gob.pe/wp-content/uploads/2026/09/Reporte-de-conflictos-sociales-n-270.pdf)). Hay **31 estados de emergencia vigentes** por decreto supremo, incluidos Pataz, la minería ilegal de Cajamarca y Madre de Dios ([tabla curada con sus decretos](data/manual/estados_emergencia.csv)).
-- **El costo laboral acaba de subir.** La remuneración mínima pasó de S/ 1,130 a **S/ 1,230 el 1 de octubre de 2026**, con un segundo tramo pendiente hasta S/ 1,300 ([DS 015-2026-TR](https://busquedas.elperuano.pe/dispositivo/EX/2559163-1)). Cada alza mueve el piso legal de un puesto 24/7 (hoy **S/ <<PISO_24H>>** al mes) y vuelve obsoletas las cotizaciones viejas.
-- **El sector es grande y está fragmentado.** SUCAMEC reportaba 4,319 empresas y más de 125,000 agentes autorizados ([El Peruano](https://elperuano.pe/noticia/141085-sucamec-acredito-a-mas-de-125-mil-agentes-de-seguridad-en-todo-el-pais); **dato antiguo**, de alrededor de 2022). En el registro actual, Garita cuenta **<<N_EMPRESAS_SUCAMEC>> empresas** con alguna autorización vigente en las modalidades que importan a un comprador.
+- **El costo laboral acaba de subir.** La remuneración mínima pasó de S/ 1,130 a **S/ 1,230 el 1 de octubre de 2026**, con un segundo tramo pendiente hasta S/ 1,300 ([DS 015-2026-TR](https://busquedas.elperuano.pe/dispositivo/EX/2559163-1)). Cada alza mueve el piso legal de un puesto 24/7 (hoy **S/ 7,724** al mes solo en planilla) y vuelve obsoletas las cotizaciones viejas.
+- **El sector es grande y está fragmentado.** SUCAMEC reportaba 4,319 empresas y más de 125,000 agentes autorizados ([El Peruano](https://elperuano.pe/noticia/141085-sucamec-acredito-a-mas-de-125-mil-agentes-de-seguridad-en-todo-el-pais); **dato antiguo**, de alrededor de 2022). En el registro actual, Garita cuenta **1,020 empresas** con alguna autorización vigente en las modalidades que importan a un comprador.
 
 ## 6. Demo
 
@@ -101,7 +101,7 @@ flowchart LR
 
 | Qué | Para qué | Por qué este |
 |---|---|---|
-| **DeepSeek `deepseek-chat`** con el SDK de OpenAI y `response_format` JSON | Leer las Bases (puestos, horas, armado, perfil), entender el pedido y leer documentos | El más barato con JSON fiable en español: el benchmark completo costó US$ <<COSTO_PIPELINE>>. Mismo patrón que el HW3. |
+| **DeepSeek `deepseek-chat`** con el SDK de OpenAI y `response_format` JSON | Leer las Bases (puestos, horas, armado, perfil), entender el pedido y leer documentos | El más barato con JSON fiable en español: el benchmark completo costó US$ 0.56. Mismo patrón que el HW3. |
 | **Pydantic** | Validar cada respuesta del LLM; un reintento con el error | Un número que no valida no entra al benchmark: un hueco es mejor que un dato inventado |
 | **PaddleOCR / RapidOCR (modelos PP-OCR en ONNX)** | Páginas escaneadas de las Bases y documentos subidos | PaddleOCR es el de la sesión 10; en Streamlit Cloud no cabe, así que corren los mismos modelos PP-OCR en ONNX |
 | **PyMuPDF** | Capa de texto y rasterizado de páginas | Rápido y sin dependencias de sistema |
@@ -119,15 +119,15 @@ flowchart LR
 | Comisión (etapa 2) | 3 % a 5 % del contrato cuando Garita intermedia la contratación | Convocatoria y gestión del contrato |
 | Perfil premium (etapa 2) | Suscripción para empresas de seguridad | Perfil y documentos al día; **no altera el puntaje** |
 
-Ejemplo de la comisión: 8 puestos 24/7 a la mediana de S/ <<MEDIANA_PUESTO_MES>> por 12 meses son S/ <<CONTRATO_EJEMPLO>>; el 3 % es S/ <<COMISION_EJEMPLO>>.
+Ejemplo de la comisión: 8 puestos 24/7 a la mediana de S/ 9,074 por 12 meses son S/ 871,104; el 3 % es S/ 26,133.
 
 **Costo por usuario** (precios de DeepSeek verificados el 20/09/2026, con su tarifa por franja horaria en [`garita/costos.py`](garita/costos.py)):
 
 | Concepto | Costo | Fuente |
 |---|---|---|
-| Normalización de los contratos (pipeline) | **US$ <<COSTO_PIPELINE>>** por corrida (<<N_LLAMADAS>> llamadas, ~<<TOKENS_POR_PROCESO>> tokens por proceso), una vez al mes y compartido entre todos los clientes | [`logs/costos.csv`](logs/costos.csv) |
-| Una consulta en la app (pedido o documento) | ~<<TOKENS_POR_CONSULTA>> tokens, **US$ <<COSTO_POR_CONSULTA>>** | `logs/costos.csv`; referencia del HW3 del autor: 32 llamadas por US$ 0.013, entre US$ 0.0003 y 0.0012 cada una |
-| Uso típico de un cliente al mes (**estimado**) | 4 contrataciones × ~6 llamadas = 24 llamadas ≈ **US$ <<COSTO_CLIENTE_MES>>** | Supuesto a validar con usuarios |
+| Normalización de los contratos (pipeline) | **US$ 0.56** por corrida completa (322 llamadas en dos pasadas, ~7,300 tokens por proceso), una vez al mes y compartido entre todos los clientes | [`logs/costos.csv`](logs/costos.csv) |
+| Una consulta en la app (pedido o documento) | ~440 tokens el pedido (US$ 0.00013) y ~1,000 una carta fianza (US$ 0.0002) | `logs/costos.csv`; referencia del HW3 del autor: 32 llamadas por US$ 0.013, entre US$ 0.0003 y 0.0012 cada una |
+| Uso típico de un cliente al mes (**estimado**) | 4 contrataciones × ~6 llamadas = 24 llamadas ≈ **US$ 0.005** | Supuesto a validar con usuarios |
 | Servidor del demo | US$ 0 (Streamlit Community Cloud) | |
 | Servidor en producción (**estimado**) | US$ 20 a 40 al mes compartidos | Una máquina virtual pequeña |
 
@@ -153,9 +153,14 @@ El costo variable en tokens es menos del 0.1 % del precio. El costo real es vend
 
 El detalle por subcategoría (qué parte descarga, cuál lee los labels, cuál limpia, cuál guarda) está en [`docs/mapa_herramientas.md`](docs/mapa_herramientas.md); cada sección está marcada en el código con `# ===== HERRAMIENTA NN` y `# --- NN.k`.
 
-**Evaluación (sesión 12).** Sobre los <<N_EVAL>> procesos con TDR legible:
+**Evaluación (sesión 12).** No hay un conjunto etiquetado de puestos por contrato, así que se compara el LLM con una línea base de reglas ("N puestos", "N agentes", "24 horas") sobre el mismo texto de los 175 procesos con Bases leídas, con tres medidas que no necesitan etiquetas ([`eval/evaluar_extraccion.py`](eval/evaluar_extraccion.py)):
 
-<<TABLA_EVAL>>
+| Método | Procesos con puestos | Precios plausibles (S/ 1,500–50,000) | Mediana S/ por puesto-mes | Dispersión (IQR / mediana) |
+|---|---:|---:|---:|---:|
+| Línea base de reglas | 53 | 66.0 % | 12,824 | 1.20 |
+| **LLM (deepseek-chat + Pydantic)** | **78** | **98.7 %** | **9,061** | **0.50** |
+
+El LLM encuentra puestos en un 47% más de procesos, casi todos sus precios son plausibles y su dispersión es la mitad: lee mejor las tablas de puestos que una regla fija. Una muestra aleatoria de 15 extracciones, con su cita textual y el link a las Bases, está en [`eval/resultados/auditoria_muestra.csv`](eval/resultados/auditoria_muestra.csv) para revisión humana.
 
 ### Garita para Claude (MCP + skill)
 
@@ -186,6 +191,54 @@ Este proyecto se construyó con **Claude Code (Claude Opus 5.5)** en una sesión
 - `HW3_Diaz/tarea1_rag_normativo/src/costos.py` → [`garita/costos.py`](garita/costos.py) (registro por llamada y tarifa por franja de DeepSeek; se agregó el tope de gasto).
 - `HW3_Diaz/tarea1_rag_normativo/src/motor.py` → el patrón de [`garita/llm.py`](garita/llm.py) (cliente de OpenAI con `base_url` de DeepSeek y `response_format` JSON; se agregó Pydantic).
 - Curso: el servidor MCP sigue el patrón de `sessions/04-mcp-claude-code`, el triaje de Document AI la regla de `sessions/10-document-ai-voz/lab/src/triaje.py` y los límites distritales vienen de `sessions/06-geoespacial`.
+
+---
+
+## Opcionales: mercado, competencia, primeros usuarios, roadmap y riesgos
+
+### Mercado (TAM, SAM y SOM)
+
+Todas las cifras son **estimadas** y sus supuestos están a la vista.
+
+| Nivel | Cifra | Supuesto |
+|---|---|---|
+| TAM: gasto en seguridad privada en el Perú | Entre US$ 400 millones y US$ 1,400 millones al año (**dato antiguo**) | US$ 400 millones según EULEN Perú en 2021 ([Infomercado](https://infomercado.pe/peru-sector-seguridad-mueve-mas-de-400-millones-de-dolares-en-el-pais/)); US$ 1,400 millones según Prosegur en 2018 ([Prosegur](https://www.euroamerica.org/wp-content/uploads/2018/06/LopezMartin_Prosegur_PPT_Peru-UE2018.pdf)) |
+| SAM: suscripciones de empresas compradoras con proceso formal | S/ 36 millones al año (**estimado**) | 2,000 empresas medianas y grandes que contratan vigilancia con un proceso formal × S/ 18,000 al año |
+| SOM: lo alcanzable en 3 años | S/ 720 mil al año (**estimado**) | 40 clientes (2 % del SAM), empezando por mineras medianas de La Libertad, Cajamarca y Arequipa |
+
+### Competencia
+
+Detalle y fuentes en [`docs/competencia.md`](docs/competencia.md). Las homologadoras (SGS, Bureau Veritas, Achilles, HODELPE) evalúan al proveedor una vez al año y sin precio; las plataformas de gestión de contratistas (eGestiona, Subcontrataley) controlan documentos una vez elegido el proveedor; el software para empresas de seguridad (Trackforce) sirve al proveedor, no al comprador; y el registro de SUCAMEC se consulta una empresa a la vez. **Ninguna ofrece un precio de referencia por puesto-mes ni cruza al proveedor con el riesgo de la zona.** Ese es el vacío que cubre Garita.
+
+### Cómo conseguir los primeros usuarios
+
+1. Validar las hipótesis de [`docs/research/`](docs/research/README.md) con jefes de seguridad de mineras medianas de La Libertad y Cajamarca, donde el riesgo es mayor y no hay un área grande de homologación.
+2. Publicar gratis el benchmark de precios por departamento como gancho para jefes de compras.
+3. Aliarse con homologadoras: Garita les da monitoreo continuo entre homologaciones.
+4. "Garita para Claude": el MCP y la skill llevan los mismos datos al asistente de un analista de compras.
+
+### Roadmap
+
+| Etapa | Qué |
+|---|---|
+| Ahora (demo) | Verificación SUCAMEC + SUNAT + OECE, benchmark de precios, riesgo por provincia, lectura de documentos, solicitud de propuesta, MCP y skill |
+| 3 meses | Pilotos con 3 mineras medianas; Bases en RAR y 7z; sanciones de SUCAMEC y SUNAFIL; alertas de vencimiento por correo |
+| 6 meses | Centrales de riesgo privadas (deudas), perfiles declarados por las empresas de seguridad, actualización mensual automática |
+| 12 meses | Intermediación del contrato con comisión; puertos, condominios y retail |
+
+### Riesgos
+
+| Riesgo | Mitigación |
+|---|---|
+| Las fuentes públicas cambian su formato (SUCAMEC es un formulario JSF) | Los datos procesados quedan versionados y la app sigue en modo demo |
+| El LLM lee mal unas Bases | Cada extracción guarda su cita; se mide contra una línea base; los precios fuera de rango se excluyen con su motivo; el dato se marca "extraído", no "verificado" |
+| Los precios públicos no reflejan los privados | Se presentan como referencia, junto al piso legal, no como "el" precio |
+| Las mineras compran por relaciones | Entrada por mineras medianas y por un benchmark que nadie más ofrece |
+| Datos personales | Solo empresas; nunca vigilantes |
+
+### Cuánto pediríamos a un inversionista (**propuesta**)
+
+US$ 120,000 de pre-semilla para 12 meses: dos personas a tiempo completo (producto y ventas), infraestructura de datos, revisión legal y tres pilotos pagados con mineras medianas. Meta: 15 clientes pagando antes de la siguiente ronda.
 
 ---
 
