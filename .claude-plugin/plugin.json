@@ -1,0 +1,18 @@
+{
+  "name": "garita",
+  "version": "0.1.0",
+  "description": "Garita para Claude: verifica empresas de seguridad privada contra SUCAMEC, OECE y SUNAT, compara precios por puesto-mes con contratos publicos y mide el riesgo de la zona. Incluye el servidor MCP de Garita y la skill evaluar-proveedor-seguridad.",
+  "author": {
+    "name": "José Miguel Díaz"
+  },
+  "homepage": "https://github.com/josemigueldiaz1/Garita-StartupProject",
+  "repository": "https://github.com/josemigueldiaz1/Garita-StartupProject",
+  "license": "MIT",
+  "keywords": ["seguridad privada", "vigilancia", "SUCAMEC", "OECE", "compras", "mineria", "Peru"],
+  "mcpServers": {
+    "garita": {
+      "command": "uv",
+      "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_ROOT}/mcp_server/server.py"]
+    }
+  }
+}

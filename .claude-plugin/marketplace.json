@@ -1,0 +1,16 @@
+{
+  "name": "garita",
+  "owner": {
+    "name": "José Miguel Díaz"
+  },
+  "metadata": {
+    "description": "Garita para Claude: datos y metodo para contratar seguridad privada confiable en el Peru."
+  },
+  "plugins": [
+    {
+      "name": "garita",
+      "source": "./",
+      "description": "Servidor MCP de Garita (empresas autorizadas por SUCAMEC, contratos de vigilancia del OECE, piso legal de un puesto y riesgo por provincia) y la skill evaluar-proveedor-seguridad."
+    }
+  ]
+}
