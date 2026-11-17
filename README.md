@@ -30,7 +30,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 - **Riesgo legal.** Si la empresa de seguridad no paga a sus trabajadores y su fianza no alcanza, la empresa usuaria responde solidariamente por los adeudos laborales ([Ley 27626, arts. 24 y 25](https://lpderecho.pe/ley-intermediacion-laboral-ley-27626/)).
 - **Riesgo de seguridad.** Una empresa sin autorización vigente para armas, o con personal informal, falla justo donde más se necesita. Pataz está en estado de emergencia por minería ilegal, con las Fuerzas Armadas a cargo del orden interno ([DS 137-2026-PCM](data/manual/estados_emergencia.csv)).
 - **Tiempo.** Verificar cada proveedor contra tres fuentes y comparar cotizaciones toma días; medir cuántos es uno de los objetivos de las conversaciones con usuarios.
-- **Informalidad del sector.** En los contratos públicos de vigilancia que leímos, el **41%** se paga por debajo del costo mínimo de planilla de un puesto 24/7 vigente cuando se firmó (comparando ambos sin IGV).
+- **Informalidad del sector.** En los contratos públicos de vigilancia que leímos, el **35%** se paga por debajo del costo mínimo de planilla de un puesto 24/7 vigente cuando se firmó (comparando ambos sin IGV). La razón aparece en las propias Bases: la mediana es de **2 agentes por puesto 24/7**, es decir, turnos de 12 horas los 7 días (84 horas semanales frente a un máximo legal de 48).
 
 **Evidencia de usuarios.** En [`docs/research/`](docs/research/README.md) hay **3 entrevistas sintéticas**: un jefe de seguridad de una minera, el gerente de una empresa de seguridad y un analista de homologación. **Son personajes ficticios construidos con IA, no personas reales**, y cada dolor que expresan está respaldado por una fuente pública con link. Los tres coinciden por motivos distintos: hoy se contrata por boca a boca, y falta una herramienta formal que reúna legalidad, precio y riesgo. El comprador paga, la empresa formal gana argumentos y la homologadora es un canal. Las hipótesis H1 a H3 tienen respaldo público; la disposición a pagar (H4) no tiene evidencia y es lo primero que validaremos con usuarios reales, con el plan que está en la misma carpeta.
 
@@ -46,7 +46,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 
 **Cada dato dice de dónde viene**: ✅ verificado con fuente oficial (con link) · 🔎 extraído de un documento oficial con IA · 📝 declarado por la empresa · 🧪 sintético para el demo. Nunca se presenta un dato declarado o sintético como verificado.
 
-**El insight.** El precio de un puesto de vigilancia sí es público, pero está escondido. El Estado contrata cientos de servicios de vigilancia al año y publica cada contrato con su monto y sus Bases. Nadie los había leído: las Bases dicen "12 agentes, 2 turnos, 365 días" en texto libre, casi siempre con OCR sucio o escaneadas. Garita las lee y las convierte en puestos, horas y meses, y con eso calcula por primera vez un **precio por puesto-mes comparable**: mediana nacional de **S/ 8,093 por puesto 24/7 al mes sin IGV** (rango típico S/ 6,258 a S/ 10,011) sobre **75 contratos de 19 departamentos**, leídos de 200 Bases con un costo total de US$ 0.56.
+**El insight.** El precio de un puesto de vigilancia sí es público, pero está escondido. El Estado contrata cientos de servicios de vigilancia al año y publica cada contrato con su monto y sus Bases. Nadie los había leído: las Bases dicen "12 agentes, 2 turnos, 365 días" en texto libre, casi siempre con OCR sucio o escaneadas. Garita las lee y las convierte en puestos, horas y meses, y con eso calcula por primera vez un **precio por puesto-mes comparable**: mediana nacional de **S/ 8,201 por puesto 24/7 al mes sin IGV** (rango típico S/ 6,747 a S/ 9,899) sobre **60 contratos de 18 departamentos**, leídos de 200 Bases con un costo total de US$ 0.56.
 
 **El segundo insight.** La confianza no está en un solo registro. Una empresa puede estar autorizada por SUCAMEC y estar inhabilitada para contratar con el Estado o tener el RUC no habido. Cruzar las fuentes por RUC es trivial con código y lento a mano. Hoy solo **1,004 empresas** tienen autorización vigente de vigilancia privada en el registro de SUCAMEC.
 
@@ -121,7 +121,7 @@ flowchart LR
 | Comisión (etapa 2) | 3 % a 5 % del contrato cuando Garita intermedia la contratación | Convocatoria y gestión del contrato |
 | Perfil premium (etapa 2) | Suscripción para empresas de seguridad | Perfil y documentos al día; **no altera el puntaje** |
 
-Ejemplo de la comisión: 8 puestos 24/7 a la mediana de S/ 8,093 sin IGV por 12 meses son S/ 776,928; el 3 % es S/ 23,308.
+Ejemplo de la comisión: 8 puestos 24/7 a la mediana de S/ 8,201 sin IGV por 12 meses son S/ 787,296; el 3 % es S/ 23,619.
 
 **¿Por qué un puesto 24/7 cuesta más de S/ 7,700 al mes?** Porque no es un vigilante: son 168 horas a la semana y la jornada máxima es de 48, así que se necesitan 3.8 agentes. Cada uno cuesta unos S/ 2,023 al mes con la RMV de S/ 1,230, el recargo nocturno, EsSalud, SCTR, Vida Ley, gratificaciones, CTS y vacaciones. Eso suma S/ 7,724 solo de planilla, antes de uniformes, armas, supervisión, seguros, utilidad e IGV ([`garita/benchmark.py`](garita/benchmark.py)).
 
@@ -164,7 +164,9 @@ El detalle por subcategoría (qué parte descarga, cuál lee los labels, cuál l
 | Línea base de reglas | 53 | 66.0 % | 12,824 | 1.20 |
 | **LLM (deepseek-chat + Pydantic)** | **78** | **98.7 %** | **9,061** | **0.50** |
 
-El LLM encuentra puestos en un 47% más de procesos, casi todos sus precios son plausibles y su dispersión es la mitad: lee mejor las tablas de puestos que una regla fija. Una muestra aleatoria de 15 extracciones, con su cita textual y el link a las Bases, está en [`eval/resultados/auditoria_muestra.csv`](eval/resultados/auditoria_muestra.csv) para revisión humana.
+El LLM encuentra puestos en un 47% más de procesos, casi todos sus precios son plausibles y su dispersión es la mitad: lee mejor las tablas de puestos que una regla fija.
+
+**Verificación manual (17/11/2026).** Se revisaron a mano, con su cita de evidencia, los contratos más baratos y los más caros. Aparecieron los dos errores típicos del LLM: contar **agentes como puestos** ("53 agentes" leído como 53 puestos 24/7, con un precio cuatro veces menor) y contar **una sede como un puesto** ("03 agentes día y 03 noche" leído como 1 puesto, con un precio triple). Se agregó una regla de consistencia con los agentes que declaran las mismas Bases: un puesto 24/7 necesita entre 2 y 5 agentes. Si no, el contrato sale del benchmark y queda en la tabla con su motivo. Esa regla excluyó 15 contratos; el benchmark final usa 60. Una muestra aleatoria de 15 extracciones, con su cita textual y el link a las Bases, está en [`eval/resultados/auditoria_muestra.csv`](eval/resultados/auditoria_muestra.csv) para revisión humana.
 
 ### Garita para Claude (MCP + skill)
 
