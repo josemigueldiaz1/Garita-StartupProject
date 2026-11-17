@@ -1,0 +1,3 @@
+metodo,procesos_evaluados,con_puestos,plausibles,pct_plausible,mediana,dispersion_iqr_sobre_mediana
+Linea base (reglas),175,53,35,66.0,12824.0,1.202
+LLM (deepseek-chat + Pydantic),175,78,77,98.7,9061.0,0.504
