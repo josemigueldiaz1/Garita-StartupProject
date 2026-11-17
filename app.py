@@ -21,7 +21,7 @@ import streamlit as st
 from garita import datos
 from garita.benchmark import costo_laboral_minimo, evaluar_oferta
 from garita.config import load_config
-from garita.pedido import (ARMAS, EQUIPAMIENTO, TIPOS_SITIO, Pedido, calendario_ics,
+from garita.pedido import (ARMAS, EQUIPAMIENTO, TIPOS_SITIO, Pedido, avisos_armamento, calendario_ics,
                            documento_por_reglas, interpretar_por_reglas, solicitud_docx,
                            solicitud_xlsx)
 
@@ -249,7 +249,11 @@ with t1:
             _validar("p_tipo_arma", ARMAS)
             b.selectbox("Tipo de arma", ARMAS, key="p_tipo_arma")
             b.caption("SUCAMEC verifica que la empresa esté autorizada **con armas**; el tipo de arma lo "
-                      "declara la empresa.")
+                      "declara la empresa. Opciones según el Reglamento de la Ley 30299 (DS 010-2017-IN, "
+                      "art. 19); prohibidas las automáticas y de características militares (art. 16).")
+            _p_armas = Pedido(**{campo: st.session_state[clave] for campo, clave in CLAVES.items()})
+            for _nivel, _msg in avisos_armamento(_p_armas):
+                (st.error if _nivel == "error" else st.warning)(_msg, icon="⚖️")
         st.session_state.p_equip = [e for e in st.session_state.p_equip if e in EQUIPAMIENTO]
         st.multiselect("Equipamiento", list(EQUIPAMIENTO), key="p_equip")
         verificables = [e for e in st.session_state.p_equip if EQUIPAMIENTO[e]]

@@ -39,8 +39,37 @@ EQUIPAMIENTO = {
     "Control de accesos": "TECNOLOGIA DE SEGURIDAD",
     "Rastreo GPS de unidades": "TECNOLOGIA DE SEGURIDAD",
     "Central receptora de alarmas": "TECNOLOGIA DE SEGURIDAD",
+    "Armas no letales (electricas, aerosol)": None,
 }
-ARMAS = ["Revolver calibre 38", "Pistola 9 mm", "Escopeta de perdigones", "Lo que defina la empresa"]
+
+# Armas que el Reglamento de la Ley 30299 (DS 010-2017-IN, arts. 16 y 19) permite en
+# servicios de seguridad privada. Cada opcion lleva la regla que la limita, si la hay.
+ARMAS = ["Revólver calibre .38 SPL",
+         "Pistola hasta calibre 9x17 mm (.380)",
+         "Escopeta de bombeo o semiautomática hasta calibre 12",
+         "Carabina semiautomática",
+         "Pistola calibre mayor a 9x17 mm (ej. 9x19)",
+         "Lo que defina la empresa"]
+SITIOS_URBANOS = {"oficina", "almacen", "planta", "puerto"}
+
+
+def avisos_armamento(p: "Pedido") -> list[tuple[str, str]]:
+    """
+    Reglas del Reglamento de la Ley 30299 que el pedido podria incumplir.
+    Devuelve (nivel, mensaje) con nivel "error" o "aviso".
+    """
+    if not p.con_armas:
+        return []
+    out = []
+    if p.tipo_arma.startswith(("Escopeta", "Carabina")) and p.tipo_sitio in SITIOS_URBANOS:
+        out.append(("aviso", "Escopetas y carabinas solo se autorizan para uso fuera del radio urbano "
+                             "(DS 010-2017-IN, art. 19.1.b). Confirma que el sitio no este en zona urbana."))
+    if p.tipo_arma.startswith("Pistola calibre mayor") and p.modalidad == "VIGILANCIA PRIVADA":
+        out.append(("error", "Un calibre mayor a 9x17 mm solo se autoriza para sistema financiero, proteccion "
+                             "personal, transporte de valores, custodia de bienes controlados y seguridad "
+                             "personal individual (art. 19.2), no para vigilancia privada. Elige revolver .38 "
+                             "SPL o pistola hasta 9x17 mm."))
+    return out
 
 
 @dataclass
@@ -50,7 +79,7 @@ class Pedido:
     tipo_sitio: str = "campamento"
     modalidad: str = "VIGILANCIA PRIVADA"
     con_armas: bool = True
-    tipo_arma: str = "Revolver calibre 38"
+    tipo_arma: str = "Revólver calibre .38 SPL"
     n_puestos: int = 8
     horas_por_dia: int = 24
     dias_por_semana: int = 7

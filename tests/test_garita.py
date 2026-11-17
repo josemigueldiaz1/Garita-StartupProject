@@ -96,6 +96,18 @@ def test_pedido_por_reglas():
     assert r.get("provincia") in (None, "PATAZ")
 
 
+def test_avisos_de_armamento_segun_reglamento():
+    from garita.pedido import Pedido, avisos_armamento
+
+    assert avisos_armamento(Pedido(tipo_arma="Revólver calibre .38 SPL")) == []
+    p = Pedido(tipo_arma="Pistola calibre mayor a 9x17 mm (ej. 9x19)")
+    assert avisos_armamento(p)[0][0] == "error"
+    p = Pedido(tipo_arma="Escopeta de bombeo o semiautomática hasta calibre 12", tipo_sitio="oficina")
+    assert avisos_armamento(p)[0][0] == "aviso"
+    p = Pedido(tipo_arma="Escopeta de bombeo o semiautomática hasta calibre 12", tipo_sitio="campamento")
+    assert avisos_armamento(p) == []
+
+
 def test_documento_por_reglas():
     r = documento_por_reglas("CARTA FIANZA por S/ 96,000.00 vigente desde el 15/11/2026 hasta el 14/02/2027")
     assert r["tipo_documento"] == "carta_fianza" and r["monto"] == 96000
