@@ -14,9 +14,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 
 ## 2. Founder
 
-**José Miguel Díaz**, estudiante de 8.º ciclo de la Universidad del Pacífico. Me apasionan la macroeconomía y las finanzas, pero más que eso me mueve resolver problemas reales de personas reales: de esos que, al solucionarlos, dejan al país un poco mejor. Creo que la programación y la IA ponen ese poder al alcance de cualquiera que se lo proponga, y Garita es mi forma de demostrarlo.
-
-Antes de Garita construí, en el mismo curso, un radar de compras públicas sobre los datos abiertos del OECE (20,422 procesos) y un asistente RAG sobre la Ley 32069 de contrataciones del Estado. Conozco por dentro las fuentes que sostienen este producto y cómo se esconden los datos en ellas.
+**José Miguel Díaz**, estudiante de 8.º ciclo de la Universidad del Pacífico. Me apasionan la macroeconomía y las finanzas, pero más que eso me mueve resolver problemas reales de personas reales: de esos que, al solucionarlos, dejan al país un poco mejor. Creo que la programación y la IA ponen ese poder al alcance de cualquiera que se lo proponga. Por eso nació la idea de Garita.
 
 ## 3. Problema
 
