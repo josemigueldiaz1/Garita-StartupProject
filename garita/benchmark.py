@@ -106,6 +106,67 @@ def precio_puesto_mes(monto: float, puestos_24h_equiv: float, meses: float) -> f
     return round(float(monto) / (float(puestos_24h_equiv) * float(meses)), 2)
 
 
+PRECIO_MIN, PRECIO_MAX = 1500, 50000
+
+
+def construir(cfg: Config | None = None) -> dict:
+    """
+    Une contratos y extracciones, calcula el precio de cada contrato y agrega por
+    departamento. Los contratos que no pasan los filtros quedan en la tabla con su
+    `motivo_exclusion`: se puede auditar por que no entraron.
+
+    Fuera de [PRECIO_MIN, PRECIO_MAX] soles por puesto-mes casi siempre hay un error
+    de lectura (agentes contados como puestos, un item que no es vigilancia). Por debajo
+    del piso legal NO se excluye: ese es justamente el hallazgo que la alerta busca.
+    """
+    import pandas as pd
+
+    cfg = cfg or load_config()
+    p = cfg.processed_dir
+    contratos = pd.read_parquet(p / "contratos_vigilancia.parquet")
+    ext = pd.read_parquet(p / "extracciones_llm.parquet").rename(columns={"meses": "meses_llm"})
+    b = contratos.merge(ext, on="ocid", how="inner")
+    # El plazo sale del contrato firmado (OECE); el que leyo el LLM solo es respaldo.
+    b["meses"] = (b["duracion_dias"] / DIAS_POR_MES).round(2)
+    b["meses"] = b["meses"].where(b["meses"] >= 1, b["meses_llm"])
+    b["precio_puesto_mes"] = [precio_puesto_mes(m, e, n) for m, e, n in
+                              zip(b["monto_contrato"], b["puestos_equivalentes_24h"], b["meses"])]
+    piso24 = costo_laboral_minimo(24, cfg=cfg).piso_puesto_mes
+    motivo = pd.Series("", index=b.index)
+    motivo[b["error"].fillna("") != ""] = "error de extraccion"
+    motivo[(motivo == "") & ~b["puede_extraer"].fillna(False).astype(bool)] = "las Bases no dicen cuantos puestos"
+    motivo[(motivo == "") & (b["confianza"] == "baja")] = "extraccion de confianza baja"
+    motivo[(motivo == "") & b["precio_puesto_mes"].isna()] = "faltan puestos o plazo"
+    motivo[(motivo == "") & ((b["precio_puesto_mes"] < PRECIO_MIN) | (b["precio_puesto_mes"] > PRECIO_MAX))] = \
+        "precio fuera de rango plausible"
+    b["motivo_exclusion"] = motivo
+    b["valido"] = motivo == ""
+    b["bajo_piso_legal"] = b["valido"] & (b["precio_puesto_mes"] < piso24)
+    b.to_parquet(p / "benchmark_contratos.parquet", index=False)
+
+    v = b[b["valido"]]
+
+    def resumen(g: pd.DataFrame, nombre: str) -> dict:
+        x = g["precio_puesto_mes"]
+        arm = g[g["armado"] == "si"]["precio_puesto_mes"]
+        sin = g[g["armado"] == "no"]["precio_puesto_mes"]
+        return {"departamento": nombre, "n": int(len(g)), "p25": round(x.quantile(0.25), 0),
+                "mediana": round(x.median(), 0), "p75": round(x.quantile(0.75), 0),
+                "minimo": round(x.min(), 0), "maximo": round(x.max(), 0),
+                "n_armado": int(len(arm)), "mediana_armado": round(arm.median(), 0) if len(arm) else None,
+                "n_sin_armas": int(len(sin)), "mediana_sin_armas": round(sin.median(), 0) if len(sin) else None,
+                "pct_bajo_piso": round(100 * g["bajo_piso_legal"].mean(), 1)}
+
+    filas = [resumen(v, "PERU")] + [resumen(g, d) for d, g in v.groupby("departamento")]
+    dep = pd.DataFrame(filas)
+    dep.to_parquet(p / "benchmark_departamento.parquet", index=False)
+    return {"contratos_con_extraccion": int(len(b)), "validos": int(len(v)),
+            "mediana_nacional": float(dep.iloc[0]["mediana"]) if len(v) else None,
+            "pct_bajo_piso": float(dep.iloc[0]["pct_bajo_piso"]) if len(v) else None,
+            "piso_legal_24h": piso24,
+            "excluidos": b.loc[~b["valido"], "motivo_exclusion"].value_counts().to_dict()}
+
+
 def evaluar_oferta(precio_ofertado_puesto_mes: float, horas_dia: int = 24,
                    benchmark: dict | None = None, cfg: Config | None = None) -> dict:
     """
