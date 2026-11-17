@@ -32,7 +32,7 @@ Hacemos la **verificación y comparación de proveedores de seguridad privada** 
 - **Tiempo.** Verificar cada proveedor contra tres fuentes y comparar cotizaciones toma días; medir cuántos es uno de los objetivos de las conversaciones con usuarios.
 - **Informalidad del sector.** En los contratos públicos que leímos, **<<PCT_BAJO_PISO>>%** se pagan por debajo del piso legal de un puesto 24/7.
 
-**Evidencia de usuarios.** La guía, la plantilla y las notas de las 3 conversaciones están en [`docs/research/`](docs/research/README.md). <<RESUMEN_CONVERSACIONES>>
+**Evidencia de usuarios.** En [`docs/research/`](docs/research/README.md) hay **3 entrevistas sintéticas**: un jefe de seguridad de una minera, el gerente de una empresa de seguridad y un analista de homologación. **Son personajes ficticios construidos con IA, no personas reales**, y cada dolor que expresan está respaldado por una fuente pública con link. Los tres coinciden por motivos distintos: hoy se contrata por boca a boca, y falta una herramienta formal que reúna legalidad, precio y riesgo. El comprador paga, la empresa formal gana argumentos y la homologadora es un canal. Las hipótesis H1 a H3 tienen respaldo público; la disposición a pagar (H4) no tiene evidencia y es lo primero que validaremos con usuarios reales, con el plan que está en la misma carpeta.
 
 ## 4. Solución e insight
 
