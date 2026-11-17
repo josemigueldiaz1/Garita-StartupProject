@@ -11,6 +11,7 @@ sin presupuesto, ambas caen a reglas y el flujo sigue completo.
 
 from __future__ import annotations
 
+import io
 import json
 from datetime import date
 
@@ -584,10 +585,21 @@ with t5:
             eventos.append((f"Vence autorización SUCAMEC de {r_.razon_social}", pd.Timestamp(r_.vence).date(),
                             f"RUC {r_.ruc} · verificado en SUCAMEC"))
     if eventos:
-        st.dataframe(pd.DataFrame(eventos, columns=["Evento", "Fecha", "Detalle"]).sort_values("Fecha"),
-                     hide_index=True, width="stretch")
-        st.download_button("Descargar al calendario (.ics, aviso 30 días antes)", calendario_ics(eventos),
-                           "garita_vencimientos.ics", "text/calendar")
+        tabla_v = pd.DataFrame(eventos, columns=["Evento", "Fecha", "Detalle"]).sort_values("Fecha")
+        tabla_v["Días restantes"] = [(f - date.today()).days for f in tabla_v["Fecha"]]
+        tabla_v["Estado"] = ["🚨 Vencido" if d < 0 else "⚠️ Vence pronto" if d <= 30 else "✅ Vigente"
+                             for d in tabla_v["Días restantes"]]
+        tabla_v = tabla_v[["Estado", "Evento", "Fecha", "Días restantes", "Detalle"]]
+        st.dataframe(tabla_v, hide_index=True, width="stretch")
+        a, b = st.columns(2)
+        excel = io.BytesIO()
+        tabla_v.assign(Estado=tabla_v["Estado"].str[2:]).to_excel(excel, index=False, sheet_name="Vencimientos")
+        a.download_button("📊 Descargar en Excel", excel.getvalue(), "garita_vencimientos.xlsx",
+                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", type="primary")
+        b.download_button("📅 Agregar a mi calendario (.ics)", calendario_ics(eventos),
+                          "garita_vencimientos.ics", "text/calendar",
+                          help="Archivo de calendario: ábrelo con Outlook (doble clic) o impórtalo en Google "
+                               "Calendar (Configuración → Importar). Crea cada vencimiento con un aviso 30 días antes.")
 
 # --- 05.10 Pestana 6: solicitud de propuesta exportable
 with t6:
