@@ -165,6 +165,11 @@ costo_laboral:
   rmv: 1230                     # remuneracion minima vital vigente desde el 01/10/2026 (S/)
   rmv_norma: "DS 015-2026-TR"
   rmv_fuente: "https://busquedas.elperuano.pe/dispositivo/EX/2559163-1"
+  # Para juzgar un contrato contra el piso legal se usa la RMV vigente cuando se firmo:
+  # un contrato de junio se cotizo con S/ 1,130, no con S/ 1,230.
+  rmv_historico:
+    - {desde: "2025-01-01", rmv: 1130, norma: "DS 006-2024-TR"}
+    - {desde: "2026-10-01", rmv: 1230, norma: "DS 015-2026-TR"}
   asignacion_familiar_pct: 0.10
   recargo_nocturno_pct: 0.35    # sobre la RMV, para horas entre 10 p. m. y 6 a. m.
   essalud_pct: 0.09
@@ -178,7 +183,9 @@ costo_laboral:
   # Un puesto 24/7 son 168 horas por semana. Con jornadas de 48 horas y un mes de
   # vacaciones al ano, hacen falta 3.8 agentes por puesto (ver benchmark.py).
   incluir_asignacion_familiar: false  # el piso es conservador: no todo agente la cobra
-  margen_minimo_empresa_pct: 0.10   # gastos generales + utilidad minima razonable
+  # El piso es solo la planilla legal, sin gastos generales ni utilidad: una oferta por
+  # debajo no alcanza ni para pagar sueldos y beneficios. Es la alerta mas conservadora.
+  margen_minimo_empresa_pct: 0.0
 
 # -----------------------------------------------------------------------------
 #  Puntaje de confianza (0 a 100). Cada componente declara su peso y su fuente.

@@ -43,8 +43,23 @@ class CostoLaboral:
 
 # ===== HERRAMIENTA 08 · LLMs con salidas estructuradas =====
 # --- 08.5 Calculo: la aritmetica del benchmark la hace Python, no el modelo
+def rmv_vigente(fecha, cfg: Config | None = None) -> float:
+    """RMV vigente en una fecha (para comparar cada contrato con el piso de su epoca)."""
+    import pandas as pd
+
+    cfg = cfg or load_config()
+    tramos = sorted(cfg.costo_laboral.get("rmv_historico", []), key=lambda t: t["desde"])
+    if fecha is None or pd.isna(fecha) or not tramos:
+        return float(cfg.costo_laboral["rmv"])
+    valor = float(tramos[0]["rmv"])
+    for t in tramos:
+        if pd.Timestamp(fecha) >= pd.Timestamp(t["desde"]):
+            valor = float(t["rmv"])
+    return valor
+
+
 def costo_laboral_minimo(horas_dia: int = 24, dias_semana: int = 7,
-                         cfg: Config | None = None) -> CostoLaboral:
+                         cfg: Config | None = None, rmv: float | None = None) -> CostoLaboral:
     """
     Piso legal mensual de un puesto que se cubre `horas_dia` horas, `dias_semana` dias.
 
@@ -55,7 +70,7 @@ def costo_laboral_minimo(horas_dia: int = 24, dias_semana: int = 7,
     """
     cfg = cfg or load_config()
     c = cfg.costo_laboral
-    rmv = float(c["rmv"])
+    rmv = float(rmv if rmv is not None else c["rmv"])
 
     horas_puesto_mes = horas_dia * dias_semana * 52 / 12
     horas_efectivas = c["horas_semanales_max"] * 52 / 12 * (11 / 12)
@@ -141,7 +156,10 @@ def construir(cfg: Config | None = None) -> dict:
         "precio fuera de rango plausible"
     b["motivo_exclusion"] = motivo
     b["valido"] = motivo == ""
-    b["bajo_piso_legal"] = b["valido"] & (b["precio_puesto_mes"] < piso24)
+    pisos = {r: costo_laboral_minimo(24, cfg=cfg, rmv=r).piso_puesto_mes
+             for r in {rmv_vigente(f, cfg) for f in b["fecha_firma"]}}
+    b["piso_legal_firma"] = [pisos[rmv_vigente(f, cfg)] for f in b["fecha_firma"]]
+    b["bajo_piso_legal"] = b["valido"] & (b["precio_puesto_mes"] < b["piso_legal_firma"])
     b.to_parquet(p / "benchmark_contratos.parquet", index=False)
 
     v = b[b["valido"]]
