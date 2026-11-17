@@ -101,18 +101,25 @@ def puntaje_confianza(ruc: str, departamento: str, modalidad: str = "VIGILANCIA 
     url_ficha = cfg.oece["ficha_publica"].format(ruc=ruc)
     if o and o.get("en_registro"):
         apto = o.get("apto_contratar")
-        comps.append(_comp("Habilitada para contratar con el Estado", w["apto_estado"] if apto else 0,
-                           w["apto_estado"], "verificado",
-                           "Apta para contratar." if apto else "Inhabilitada o suspendida por el Tribunal.",
-                           url_ficha))
+        san = int(o.get("n_sanciones") or 0)
+        # "No apto" casi siempre es un RNP vencido (le pasa a empresas grandes y
+        # conocidas), no una sancion. Solo una sancion del Tribunal deja el componente en 0.
+        if apto:
+            pts, txt = w["apto_estado"], "Registro Nacional de Proveedores vigente: apta para contratar con el Estado."
+        elif san:
+            pts, txt = 0, "No apta para contratar con el Estado y con sanciones del Tribunal."
+        else:
+            pts, txt = w["apto_estado"] / 3, ("Registro Nacional de Proveedores no vigente hoy: no puede "
+                                              "contratar con el Estado hasta renovarlo. No es una sancion.")
+        comps.append(_comp("Registro de proveedores del Estado", pts, w["apto_estado"], "verificado",
+                           txt, url_ficha))
         n = int(o.get("n_penalidades") or 0)
         pts = (w["penalidades"] if n == 0 else 0.6 * w["penalidades"] if n <= 2
                else 0.3 * w["penalidades"] if n <= 5 else 0)
-        san = int(o.get("n_sanciones") or 0)
         comps.append(_comp("Penalidades y sanciones", pts if san == 0 else 0, w["penalidades"], "verificado",
                            f"{n} penalidades en contratos publicos; {san} sanciones del Tribunal.", url_ficha))
     else:
-        comps.append(_comp("Habilitada para contratar con el Estado", w["apto_estado"] / 2, w["apto_estado"],
+        comps.append(_comp("Registro de proveedores del Estado", w["apto_estado"] / 2, w["apto_estado"],
                            "sin_dato", "No figura en el registro de proveedores del Estado.", url_ficha))
         comps.append(_comp("Penalidades y sanciones", w["penalidades"] / 2, w["penalidades"], "sin_dato",
                            "Sin historial de contratos publicos para evaluar.", url_ficha))
