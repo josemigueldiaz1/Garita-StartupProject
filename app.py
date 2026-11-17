@@ -559,7 +559,8 @@ with t5:
             campos = documento_por_reglas(doc.texto)
         sintetico = "SINTETICO" in datos.normalizar(doc.texto)
         st.markdown(f"**Datos extraídos** ({origen}) · {nivel('sintetico' if sintetico else 'declarado')}")
-        st.dataframe(pd.DataFrame([{"Campo": k, "Valor": v} for k, v in campos.items() if v not in (None, "")]),
+        st.dataframe(pd.DataFrame([{"Campo": k, "Valor": f"{v:,.2f}" if isinstance(v, float) else str(v)}
+                                   for k, v in campos.items() if v not in (None, "")]),
                      hide_index=True, width="stretch")
         if campos.get("fecha_vencimiento"):
             vence = date.fromisoformat(str(campos["fecha_vencimiento"])[:10])
