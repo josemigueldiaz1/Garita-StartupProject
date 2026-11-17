@@ -221,3 +221,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------- Garita
+# Secretos: solo .env.example va al repo.
+.env.*
+!.env.example
+# Descargas crudas (ZIP mensuales del OECE, PDF de Bases, padron SUNAT): se regeneran
+# con el pipeline. Lo procesado (data/processed) si se versiona: es el modo demo.
+data/raw/
+data/cache/
+# Pedidos que guardan los usuarios de la app en local
+data/pedidos/

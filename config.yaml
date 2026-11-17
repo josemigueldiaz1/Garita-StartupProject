@@ -1,0 +1,176 @@
+# =============================================================================
+#  GARITA — configuracion
+#
+#  Ningun parametro vive en el codigo: URLs, filtros, precios, pesos del puntaje
+#  y supuestos del costo laboral se cambian aqui y el pipeline y la app los leen.
+# =============================================================================
+
+proyecto:
+  nombre: "Garita"
+  one_liner: >-
+    Ayudamos a mineras y empresas a contratar seguridad privada confiable en el Peru:
+    verificamos proveedores contra SUCAMEC, OECE y SUNAT, comparamos precios con
+    contratos publicos reales y recomendamos segun el riesgo de la zona.
+  autor: "Jose Miguel Diaz"
+
+rutas:
+  raw: "data/raw"              # descargas crudas (no se versionan)
+  processed: "data/processed"  # tablas listas para la app (si se versionan: modo demo)
+  demo: "data/demo"            # documentos sinteticos para el demo, etiquetados
+  pedidos: "data/pedidos"      # pedidos guardados por la app en local
+  logs: "logs"
+
+red:
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Garita/0.1 (proyecto academico UP)"
+  segundos_entre_peticiones: 1.0
+  timeout_seg: 120
+  reintentos: 3
+
+# -----------------------------------------------------------------------------
+#  SUCAMEC — registro de empresas de seguridad privada autorizadas
+# -----------------------------------------------------------------------------
+# El link que circula en las bases de licitaciones (/web/index.php/empresas-de-
+# seguridad) devuelve 404. El registro vigente es una aplicacion JSF/PrimeFaces
+# enlazada desde gob.pe/institucion/sucamec/pages/9498-empresas-de-seguridad.
+sucamec:
+  url: "https://www.sucamec.gob.pe/rgGSSP/aplicacion/resoluciones/List.xhtml"
+  pagina_publica: "https://www.gob.pe/institucion/sucamec/pages/9498-empresas-de-seguridad"
+  filas_por_pagina: 100
+  # Codigos internos del <select> de modalidades. Se descargan las que importan a
+  # un comprador de seguridad; el resto (consultoria individual, cuenta propia)
+  # no ofrece servicio a terceros.
+  modalidades:
+    "1": "VIGILANCIA PRIVADA"
+    "5": "PROTECCION PERSONAL"
+    "3": "TRANSPORTE DE DINERO Y VALORES"
+    "15": "TECNOLOGIA - VIDEO A DISTANCIA"
+    "13": "TECNOLOGIA - GPS"
+    "17": "TECNOLOGIA - CONTROL DE ACCESOS"
+    "12": "TECNOLOGIA - CENTRALES RECEPTORAS"
+    "19": "TECNOLOGIA - SEGURIDAD"
+    "8": "CONSULTORIA Y ASESORIA"
+
+# -----------------------------------------------------------------------------
+#  OECE — contrataciones abiertas (OCDS). Misma API que el HW3.
+# -----------------------------------------------------------------------------
+oece:
+  api_base: "https://contratacionesabiertas.oece.gob.pe/api/v1"
+  fuente: "seace_v3"
+  formato: "csv_es"
+  # Seis meses bastan para el benchmark. Ampliar aqui si hacen falta mas casos.
+  meses:
+    - {anio: 2026, mes: "05"}
+    - {anio: 2026, mes: "06"}
+    - {anio: 2026, mes: "07"}
+    - {anio: 2026, mes: "08"}
+    - {anio: 2026, mes: "09"}
+    - {anio: 2026, mes: "10"}
+  # Un proceso entra si algun item tiene esta clasificacion del catalogo CUBSO o si
+  # su titulo cumple el patron Y no cumple la exclusion (uniformes, camaras, obras).
+  clasificacion_vigilancia: "SERVICIO DE SEGURIDAD Y VIGILANCIA"
+  patron_titulo: "vigilancia|seguridad privada|agentes? de seguridad|resguardo"
+  patron_exclusion: "uniforme|adquisici|obra|monitor|c[aá]mara|videovigilancia|equipamiento|construcci|mejoramiento|instalaci[oó]n de"
+  ficha_proveedor: "https://eap.oece.gob.pe/perfilprov-bus/1.0/ficha/{ruc}"
+  ficha_publica: "https://apps.osce.gob.pe/perfilprov-ui/ficha/{ruc}"
+
+# -----------------------------------------------------------------------------
+#  SUNAT — padron reducido del RUC (estado y condicion de domicilio)
+# -----------------------------------------------------------------------------
+sunat:
+  padron_url: "https://www.sunat.gob.pe/descargaPRR/padron_reducido_ruc.zip"
+
+# -----------------------------------------------------------------------------
+#  Defensoria del Pueblo — reporte mensual de conflictos sociales
+# -----------------------------------------------------------------------------
+defensoria:
+  indice: "https://www.defensoria.gob.pe/categorias_de_documentos/reportes/"
+  patron_pdf: "(?i)reporte-de-conflictos-sociales-n-\\d+"
+
+# -----------------------------------------------------------------------------
+#  Limites territoriales (sesion 06 del curso)
+# -----------------------------------------------------------------------------
+geo:
+  distrital_url: "https://raw.githubusercontent.com/d2cml-ai/Data-Science-Python/main/sessions/06-geoespacial/lab/Data/peru_distrital_simple.geojson"
+  departamental_url: "https://raw.githubusercontent.com/d2cml-ai/Data-Science-Python/main/sessions/06-geoespacial/lab/Data/peru_departamental_simple.geojson"
+
+# -----------------------------------------------------------------------------
+#  Document AI (sesion 10): triaje texto/imagen y OCR solo donde hace falta
+# -----------------------------------------------------------------------------
+documentos:
+  umbral_caracteres: 200        # una pagina con menos texto se trata como imagen
+  max_paginas_ocr: 8            # tope de paginas escaneadas que se pasan por OCR por PDF
+  max_caracteres_llm: 14000     # texto de los TDR que se envia al LLM por proceso
+  palabras_tdr:                 # puntuan una pagina como "terminos de referencia"
+    - "puesto"
+    - "puestos"
+    - "agente"
+    - "agentes"
+    - "vigilante"
+    - "turno"
+    - "horas"
+    - "arma"
+    - "revolver"
+    - "estatura"
+    - "supervisor"
+    - "termino de referencia"
+    - "terminos de referencia"
+    - "cantidad"
+
+# -----------------------------------------------------------------------------
+#  LLM (sesion 08): DeepSeek con el cliente de OpenAI y salida JSON
+# -----------------------------------------------------------------------------
+llm:
+  modelo: "deepseek-chat"
+  base_url: "https://api.deepseek.com"
+  temperatura: 0.0
+  max_tokens: 1200
+  timeout_seg: 90
+  tope_usd_defecto: 3.00        # se puede bajar con GARITA_TOPE_USD en .env
+  hilos: 4                      # llamadas en paralelo en el pipeline
+
+# Mismos precios y misma logica horaria que costos.py del HW3.
+costos:
+  verificado_el: "2026-09-20"
+  fuente: "https://api-docs.deepseek.com/quick_start/pricing"
+  horas_pico_utc:
+    - {desde: "01:00", hasta: "04:00"}
+    - {desde: "06:00", hasta: "10:00"}
+  solo_dias_habiles: true
+  precios_por_millon:
+    pico:  {entrada_cache_hit: 0.006, entrada_cache_miss: 0.30, salida: 1.20}
+    valle: {entrada_cache_hit: 0.003, entrada_cache_miss: 0.15, salida: 0.60}
+  archivo_log: "logs/costos.csv"
+
+# -----------------------------------------------------------------------------
+#  Costo laboral minimo de un puesto (alerta de informalidad)
+# -----------------------------------------------------------------------------
+costo_laboral:
+  rmv: 1130                     # remuneracion minima vital vigente (S/)
+  rmv_fuente: "https://www.gob.pe/institucion/mtpe/normas-legales/6328574-006-2024-tr"
+  asignacion_familiar_pct: 0.10
+  recargo_nocturno_pct: 0.35    # sobre la RMV, para horas entre 10 p. m. y 6 a. m.
+  essalud_pct: 0.09
+  sctr_pct: 0.0153              # seguro complementario de trabajo de riesgo (referencial)
+  vida_ley_pct: 0.0053          # seguro vida ley (referencial)
+  gratificaciones_por_anio: 2
+  bonificacion_extraordinaria_pct: 0.09   # sobre gratificaciones (Ley 30334)
+  cts_sueldos_por_anio: 1.1667  # 1 sueldo + 1/6 de gratificacion
+  vacaciones_sueldos_por_anio: 1
+  horas_semanales_max: 48
+  # Un puesto 24/7 son 168 horas por semana. Con jornadas de 48 horas y un mes de
+  # vacaciones al ano, hacen falta 3.8 agentes por puesto (ver benchmark.py).
+  incluir_asignacion_familiar: false  # el piso es conservador: no todo agente la cobra
+  margen_minimo_empresa_pct: 0.10   # gastos generales + utilidad minima razonable
+
+# -----------------------------------------------------------------------------
+#  Puntaje de confianza (0 a 100). Cada componente declara su peso y su fuente.
+# -----------------------------------------------------------------------------
+confianza:
+  pesos:
+    autorizacion_sucamec: 30    # vigente para la modalidad y el departamento
+    vigencia_restante: 10       # meses hasta el vencimiento de la autorizacion
+    sunat: 15                   # RUC activo y habido
+    apto_estado: 15             # no inhabilitado para contratar con el Estado
+    penalidades: 10             # penalidades registradas en el OECE
+    experiencia_publica: 15     # contratos de vigilancia ganados (OCDS)
+    cobertura: 5                # sedes autorizadas en varios departamentos

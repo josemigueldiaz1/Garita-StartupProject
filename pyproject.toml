@@ -1,0 +1,40 @@
+[project]
+name = "garita"
+version = "0.1.0"
+description = "Garita: verificamos y comparamos proveedores de seguridad privada en el Perú con datos de SUCAMEC, OECE, SUNAT y la Defensoría del Pueblo."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+authors = [{ name = "José Miguel Díaz" }]
+license = { text = "MIT" }
+
+# Lo que necesita la app desplegada. Es lo mismo que exporta requirements.txt.
+dependencies = [
+    "streamlit>=1.40",
+    "streamlit-folium>=0.22",
+    "folium>=0.17",
+    "geopandas>=1.0",
+    "pandas>=2.2",
+    "pyarrow>=16",
+    "requests>=2.32",
+    "pymupdf>=1.24",
+    "openai>=1.40",
+    "pydantic>=2.7",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "rapidocr-onnxruntime>=1.3",
+]
+
+[dependency-groups]
+# Servidor MCP "Garita para Claude" (herramienta 04). No hace falta en la nube.
+mcp = ["fastmcp>=2.10"]
+# PaddleOCR para el pipeline en local (herramienta 10). Pesa demasiado para Streamlit Cloud.
+ocr = ["paddleocr>=3.0", "paddlepaddle>=3.0"]
+dev = ["pytest>=8"]
+
+[tool.uv]
+default-groups = ["mcp", "dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
