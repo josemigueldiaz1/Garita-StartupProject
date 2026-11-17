@@ -49,6 +49,7 @@ Busca el número de sección (por ejemplo `03.2`) en el repo para llegar directo
 | ¿Cómo calculas la distancia de la sede al sitio? | Centroide del distrito de la sede (calculado en UTM 18S) y haversine; es línea recta. | `garita/geo.py` `centroide`, `distancia_km` |
 | ¿Cómo se calcula el puntaje de confianza? | Siete componentes con peso en `config.yaml` (autorización 30, vigencia 10, SUNAT 15, registro de proveedores 15, penalidades 10, experiencia 15, cobertura 5), cada uno con nivel y fuente. | `garita/confianza.py` · G.1 |
 | ¿De dónde sale el piso legal? | RMV S/ 1,230 (DS 015-2026-TR) + recargo nocturno 35% en 1/3 de las horas + EsSalud, SCTR, Vida Ley + gratificaciones, CTS y vacaciones; 3.8 agentes por puesto 24/7; 10% de margen mínimo. | `garita/benchmark.py` · `costo_laboral_minimo`; `config.yaml → costo_laboral` |
+| ¿Qué armas puede pedir el cliente? | Las del Reglamento de la Ley 30299 (DS 010-2017-IN, art. 19): revólver .38 SPL, pistola hasta 9x17 mm, escopeta y carabina solo fuera del radio urbano. Un calibre mayor a 9x17 mm no se permite en vigilancia privada (art. 19.2) y la app lo marca en rojo. | `garita/pedido.py` `ARMAS`, `avisos_armamento` |
 | ¿Usas datos de personas? | No. Solo empresas. El perfil (estatura, edad) es un requisito del cliente. Del padrón de SUNAT solo RUC 20. | `README.md` · Datos y privacidad; `garita/pedido.py` docstring |
 
 ## MCP (04) y skills (16)
