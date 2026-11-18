@@ -103,7 +103,7 @@ flowchart LR
 
 | Qué | Para qué | Por qué este |
 |---|---|---|
-| **DeepSeek `deepseek-chat`** con el SDK de OpenAI y `response_format` JSON | Leer las Bases (puestos, horas, armado, perfil), entender el pedido y leer documentos | El más barato con JSON fiable en español: el benchmark completo costó US$ 0.56. Mismo patrón que el HW3. |
+| **DeepSeek `deepseek-chat`** (la API lo atiende hoy con `deepseek-flash`, según el campo `model` de su respuesta del 18/11/2026) con el SDK de OpenAI y `response_format` JSON | Leer las Bases (puestos, horas, armado, perfil), entender el pedido y leer documentos | El más barato con JSON fiable en español: el benchmark completo costó US$ 0.56. Mismo patrón que el HW3. |
 | **Pydantic** | Validar cada respuesta del LLM; un reintento con el error | Un número que no valida no entra al benchmark: un hueco es mejor que un dato inventado |
 | **PaddleOCR / RapidOCR (modelos PP-OCR en ONNX)** | Páginas escaneadas de las Bases y documentos subidos | PaddleOCR es el de la sesión 10; en Streamlit Cloud no cabe, así que corren los mismos modelos PP-OCR en ONNX |
 | **PyMuPDF** | Capa de texto y rasterizado de páginas | Rápido y sin dependencias de sistema |
