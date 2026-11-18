@@ -512,13 +512,40 @@ with t4:
             st.caption("Cada punto es un contrato público de vigilancia. La banda celeste es el rango típico "
                        "(p25–p75). Puestos y horas leídos de las Bases con IA, monto y plazo del contrato firmado.")
             with st.expander("Ver los contratos y la evidencia de cada extracción"):
+                cont = cont.assign(url_registro="https://contratacionesabiertas.oece.gob.pe/api/v1/record/" + cont["ocid"])
                 st.dataframe(cont[["entidad", "departamento", "monto_contrato", "meses", "n_puestos",
-                                   "puestos_equivalentes_24h", "armado", "precio_puesto_mes", "confianza",
-                                   "evidencia", "url_bases"]],
+                                   "puestos_equivalentes_24h", "n_agentes", "precio_puesto_mes", "confianza",
+                                   "evidencia", "url_registro", "url_bases"]],
                              hide_index=True, width="stretch",
-                             column_config={"url_bases": st.column_config.LinkColumn("Bases"),
-                                            "precio_puesto_mes": st.column_config.NumberColumn(format="S/ %,.0f"),
+                             column_config={"url_registro": st.column_config.LinkColumn("Registro OECE",
+                                                                                         display_text="ver registro"),
+                                            "url_bases": st.column_config.LinkColumn("Bases (SEACE)",
+                                                                                     display_text="descargar PDF"),
+                                            "precio_puesto_mes": st.column_config.NumberColumn(
+                                                "S/ por puesto-mes (sin IGV)", format="S/ %,.0f"),
                                             "monto_contrato": st.column_config.NumberColumn(format="S/ %,.0f")})
+                st.caption("El registro OECE es la API oficial de datos abiertos (siempre disponible). El PDF se "
+                           "descarga del servidor de SEACE, que a veces no responde (devolvía error 404 el "
+                           "18/11/2026 de madrugada). Por eso Garita guarda el texto que leyó de cada Bases:")
+
+                # --- 05.14 Evidencia: el texto que Document AI leyo de las Bases, guardado en el repo
+                textos = datos.tabla("tdr_textos")
+                if not textos.empty:
+                    opciones = cont["ocid"].tolist()
+                    nombres = dict(zip(cont["ocid"], cont["entidad"].str.slice(0, 70) + " · S/ " +
+                                       cont["precio_puesto_mes"].round(0).astype(int).astype(str)))
+                    elegido = st.selectbox("Ver el texto leído de las Bases de un contrato", opciones,
+                                           format_func=lambda o: nombres.get(o, o), key="ver_tdr")
+                    t = textos[textos["ocid"] == elegido]
+                    fila = cont[cont["ocid"] == elegido].iloc[0]
+                    st.markdown(f"**Lo que extrajo el LLM:** {int(fila['n_puestos'] or 0)} puestos · "
+                                f"{fila['puestos_equivalentes_24h']:.1f} puestos 24/7 equivalentes · "
+                                f"{'' if pd.isna(fila.get('n_agentes')) else str(int(fila['n_agentes'])) + ' agentes · '}"
+                                f"cita: _{fila['evidencia']}_")
+                    if not t.empty:
+                        st.caption(f"Páginas leídas: {t.iloc[0]['paginas_tdr']} de {int(t.iloc[0]['paginas_totales'])} · "
+                                   f"{int(t.iloc[0]['paginas_ocr'])} con OCR · {nivel('extraido')}")
+                        st.text(t.iloc[0]["texto_tdr"][:6000])
         with st.expander("¿Cómo se calcula el piso legal?"):
             st.json(piso24.a_dict())
 
